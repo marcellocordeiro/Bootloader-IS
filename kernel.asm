@@ -1,11 +1,12 @@
 org 0x7e00
 jmp start
 
+username times 32 db 0
+command times 32 db 0
+
 debug db 'fml', 13, 10, 0
-username times 16 db 0
 hello db 'Enter your username: ', 0
 input db '@OS:~$ ', 0
-command times 32 db 0
 invalidCommand db 'Invalid command. Type ', 39, 'help', 39, ' for a list of valid commands', 13, 10, 0
 
 help_cmd db 'help', 0
@@ -31,10 +32,26 @@ start:
 	mov si, hello
 	call printString
 
-	mov di, username
+	mov di, command
 	call readStr
 
-	jmp loopp
+	mov si, command
+	mov di, username
+
+	.copyUsername:
+		lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
+
+		cmp al, 0 ;0 é o código do \0
+		je .done ;se cmp for verdadeiro (verifica no registrador de flags)
+
+		stosb
+
+		jmp .copyUsername
+
+		.done:
+			stosb
+
+			jmp loopp
 
 loopp:
 	mov si, username
@@ -122,7 +139,6 @@ readStr:
 
 	cmp al, 08h
 	je .backspace
-
 
 	call printChar
 

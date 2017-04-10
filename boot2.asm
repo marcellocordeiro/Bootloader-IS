@@ -15,12 +15,6 @@ start:
 	mov al, 12h
 	int 10h
 
-	;background
-	;mov ah, 0bh
-	;mov bh, 00h
-	;mov bl, 00h
-	;int 10h
-
 	;set palette
 	mov ah, 0bh
 	mov bh, 01h
@@ -53,17 +47,17 @@ start:
 		mov es, ax
 		xor bx, bx
 
-		ler:
-			mov ah, 0x02
-			mov al, 6
-			mov ch, 0
-			mov cl, 3
-			mov dh, 0
-			mov dl, 0
-			int 13h
-			jc ler
+	ler:
+		mov ah, 0x02
+		mov al, 6
+		mov ch, 0
+		mov cl, 3
+		mov dh, 0
+		mov dl, 0
+		int 13h
+		jc ler
 
-			jmp 0x0000:0x7e00
+		jmp 0x0000:0x7e00
 
 delay:
 	mov ah, 86h

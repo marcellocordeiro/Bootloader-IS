@@ -1,12 +1,8 @@
 org 0x7c00
 jmp start
 
-string times 16 db 0
-hello db 'Enter your username: ', 0
-input db '@chellOS:~$ ', 0
-
 start:
-	xor ax, ax ; zera o DS, pois a partir dele que o processador busca os dados utilizados no programa
+	xor ax, ax
 	mov ds, ax
 
 reset:
