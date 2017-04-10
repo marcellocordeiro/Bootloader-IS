@@ -41,16 +41,15 @@ start:
 	.copyUsername:
 		lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
 
+		stosb
+
 		cmp al, 0 ;0 é o código do \0
 		je .done ;se cmp for verdadeiro (verifica no registrador de flags)
 
-		stosb
 
 		jmp .copyUsername
 
 		.done:
-			stosb
-
 			jmp loopp
 
 loopp:
@@ -204,34 +203,35 @@ newLine:
 	mov ah, 0eh
 	mov al, 13 ;\n
 	int 10h
+
 	mov al, 10 ;return (início da linha)
 	int 10h
 
 	ret
 
 strcmp:
-	mov al, [si]   ; grab a byte from SI
-	mov bl, [di]   ; grab a byte from DI
+	mov al, [si] ;grab a byte from SI
+	mov bl, [di] ;grab a byte from DI
 
-	cmp al, bl     ; are they equal?
-	jne .notequal  ; nope, we're done.
+	cmp al, bl ;are they equal?
+	jne .notequal ;nope, we're done.
 
-	cmp al, 0  ; are both bytes (they were equal before) null?
-	je .done   ; yes, we're done.
+	cmp al, 0 ;are both bytes (they were equal before) null?
+	je .done ;yes, we're done.
 
-	inc di     ; increment DI
-	inc si     ; increment SI
+	inc di ;increment DI
+	inc si ;increment SI
 
-	jmp strcmp ; loop!
+	jmp strcmp ;loop!
 
 	.notequal:
-		clc  ; not equal, clear the carry flag
-		
+		clc ;not equal, clear the carry flag
+
 		ret
- 
-	.done: 	
-		stc  ; equal, set the carry flag
-		
+
+	.done:
+		stc ;equal, set the carry flag
+
 		ret
 
 done:

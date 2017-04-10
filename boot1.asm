@@ -6,24 +6,26 @@ start:
 	mov ds, ax
 
 reset:
-	mov ah, 0 ; AH = 0, codigo da funcao que reinicia o controlador de disco
+	mov ah, 00h ; AH = 0, codigo da funcao que reinicia o controlador de disco
 	mov dl, 0 ; numero do drive a ser resetado
 	int 13h
+
 	jc reset ; caso aconteca algum erro, tenta novamente
 
-	mov ax, 0x50 ; ler o setor do endereco 0x500
+	mov ax, 0x500 ; ler o setor do endereco 0x500
 	mov es, ax ; segmento com dados extra
 	xor bx, bx
 
 load:
-	mov ah, 0x02 ; codigo da funcao que le do disco
-	mov al, 1 ; numero de setores a serem lidos
-	mov ch, 0 ; numero do cilindro a ser lido
-	mov cl, 2 ; numero do setor
-	mov dh, 0 ; numero do cabecote
-	mov dl, 0 ; numero do drive
+	mov ah, 0x02 ;comando de ler setor do disco
+	mov al, 1 ;quantidade de setores ocupados por boot2
+	mov ch, 0 ;trilha 0
+	mov cl, 2 ;setor 2
+	mov dh, 0 ;cabeca 0
+	mov dl, 0 ;drive 0
 	int 13h
-	jc load ; caso aconteca algum erro, tenta novamente
+
+	jc load ;deu erro, tenta de novo
 
 jmp 0x50:0x0 ; executar o setor do endereco 0x500:0, vai para o boot2
 

@@ -37,27 +37,30 @@ start:
 	call printString ; imprimindo terceira mensagem
 	call delay
 
-	reset:
-		mov ah, 0
-		mov dl, 0
-		int 13h
-		jc reset
+	jmp reset
 
-		mov ax, 0x7e0
-		mov es, ax
-		xor bx, bx
+reset:
+	mov ah, 00h		;resetar os drivers de disco
+	mov dl, 0		;floppy disk pq usou dd no script
+	int 13h			;interrupção de acesso ao disco
+	jc reset		;em caso de erro, tenta de novo
 
-	ler:
-		mov ah, 0x02
-		mov al, 6
-		mov ch, 0
-		mov cl, 3
-		mov dh, 0
-		mov dl, 0
-		int 13h
-		jc ler
+	mov ax, 0x7e0	;0x7e0<<1 + 0 = 0x7e00, que eh o inicio do kernel.asm
+	mov es, ax
+	xor bx, bx		;posição = es<<1+bx 	
+	jmp load
 
-		jmp 0x0000:0x7e00
+load:
+	mov ah, 0x02		;comando de ler setor do disco
+	mov al, 20		;quantidade de setores ocupados por kernel
+	mov ch, 0		;trilha 0
+	mov cl, 3		;vai comecar a ler do setor 3
+	mov dh, 0		;cabeca 0
+	mov dl, 0		;drive 0
+	int 13h			;interrupcao de disco
+	jc load			;deu erro, tenta de novo
+
+	jmp 0x0000:0x7e00
 
 delay:
 	mov ah, 86h
