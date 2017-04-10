@@ -13,7 +13,7 @@ start:
 	;video mode
 	mov ah, 00h
 	mov al, 12h
-	int 10h
+	;int 10h
 
 	;background
 	;mov ah, 0bh

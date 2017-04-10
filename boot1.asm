@@ -1,6 +1,10 @@
 org 0x7c00
 jmp start
 
+string times 16 db 0
+hello db 'Enter your username: ', 0
+input db '@chellOS:~$ ', 0
+
 start:
 	xor ax, ax ; zera o DS, pois a partir dele que o processador busca os dados utilizados no programa
 	mov ds, ax
@@ -28,4 +32,4 @@ load:
 jmp 0x50:0x0 ; executar o setor do endereco 0x500:0, vai para o boot2
 
 times 510-($-$$) db 0 ; boot tem que ter 512 bytes
-dw 0xAA55 ; assinatura do boot no final
+dw 0xaa55 ; assinatura do boot no final
