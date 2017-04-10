@@ -19,26 +19,14 @@ start:
 
 	;video mode
 	mov ah, 00h
-	mov al, 12h
-	int 10h
-
-	;background
-	;mov ah, 0bh
-	;mov bh, 00h
-	;mov bl, 00h
-	;int 10h
-
-	;set palette
-	mov ah, 0bh
-	mov bh, 01h
-	mov bl, 00h
+	mov al, 03h ;text mode
 	int 10h
 
 	call clear
 
-	;mov ah, 01h
-	;mov cx, 07h
-	;int 10h
+	mov ah, 01h
+	mov cx, 07h
+	int 10h
 
 	mov si, hello
 	call printString
@@ -46,13 +34,9 @@ start:
 	mov di, username
 	call readStr
 
-	call loopp
-
-	jmp done
+	jmp loopp
 
 loopp:
-	
-
 	mov si, username
 	call printString
 
@@ -97,6 +81,8 @@ loopp:
 		mov si, debug
 		call printString
 
+		;jmp done
+
 		jmp loopp
 
 	.invalidCommand:
@@ -105,23 +91,24 @@ loopp:
 
 		jmp loopp
 
-
-
-
-
-
-
-
 clear:
-	mov ax, 0x0700  ; function 07, AL=0 means scroll whole window
-	mov bh, 0x00 ;00h = modo de vídeo, 07h = modo de texto  ; character attribute = white on black
-	mov cx, 0x0000  ; row = 0, col = 0
-	mov dx, 0x1e4f  ; row = 24 (0x18), col = 79 (0x4f)
-	int 0x10        ; call BIOS video interrupt
+	mov ah, 07h ;scroll down
+	mov al, 00h ;scroll the whole window
+	mov bh, 07h ;00h = modo de vídeo, 07h = modo de texto  ; character attribute = white on black
 
+	;upper left corner
+	mov ch, 00h ;row = 0
+	mov cl, 00h ;col = 0
+
+	;lower right corner
+	mov dh, 1fh ;row = 24 (0x18)
+	mov dl, 4fh ;col = 79 (0x4f)
+	int 10h ;call BIOS video interrupt
+
+	;set cursor to the beginning
 	mov ah, 02h
 	mov bh, 00h
-	mov dx, 0
+	xor dx, dx
 	int 10h
 
 	ret
@@ -209,17 +196,18 @@ newLine:
 strcmp:
 	mov al, [si]   ; grab a byte from SI
 	mov bl, [di]   ; grab a byte from DI
+
 	cmp al, bl     ; are they equal?
 	jne .notequal  ; nope, we're done.
- 
- 	cmp al, 0  ; are both bytes (they were equal before) null?
+
+	cmp al, 0  ; are both bytes (they were equal before) null?
 	je .done   ; yes, we're done.
- 
+
 	inc di     ; increment DI
 	inc si     ; increment SI
 
 	jmp strcmp ; loop!
- 
+
 	.notequal:
 		clc  ; not equal, clear the carry flag
 		
@@ -232,5 +220,3 @@ strcmp:
 
 done:
 	jmp $
-
-dw 0xaa55
