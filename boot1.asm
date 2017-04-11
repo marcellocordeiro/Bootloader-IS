@@ -12,7 +12,7 @@ reset:
 
 	jc reset ; caso aconteca algum erro, tenta novamente
 
-	mov ax, 0x500 ; ler o setor do endereco 0x500
+	mov ax, 0x50 ; ler o setor do endereco 0x500
 	mov es, ax ; segmento com dados extra
 	xor bx, bx
 
