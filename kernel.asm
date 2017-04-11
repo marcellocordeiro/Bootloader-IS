@@ -41,11 +41,10 @@ start:
 	.copyUsername:
 		lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
 
-		stosb
+		stosb ;salva al em di
 
 		cmp al, 0 ;0 é o código do \0
 		je .done ;se cmp for verdadeiro (verifica no registrador de flags)
-
 
 		jmp .copyUsername
 
@@ -54,33 +53,34 @@ start:
 
 loopp:
 	mov si, username
-	call printString
+	call printString ;imprime o username
 
 	mov si, input
-	call printString
+	call printString ;imprime @OS~$
 
 	mov di, command
-	call readStr
+	call readStr ;recebe o comando do usuário
 
+	;usuário digitou help?
 	mov si, help_cmd
 	mov di, command
 	call strcmp
 	jc .help
 
+	;usuário digitou clear?
 	mov si, clear_cmd
 	mov di, command
 	call strcmp
 	jc .clear
 
-
+	;usuário digitou shutdown?
 	mov si, shutdown_cmd
 	mov di, command
 	call strcmp
 	jc .shutdown
 
+	;usuário não digitou nenhum comando válio
 	jmp .invalidCommand
-
-	jmp loopp
 
 	.help:
 		mov si, debug
@@ -133,10 +133,10 @@ readStr:
 	mov ah, 00h ;coloca o caractere lido do teclado no registrador al
 	int 16h
 
-	cmp al, 0dh
+	cmp al, 0dh ;enter?
 	je .done
 
-	cmp al, 08h
+	cmp al, 08h ;backspace?
 	je .backspace
 
 	call printChar
@@ -146,7 +146,7 @@ readStr:
 	jmp readStr
 
 	.backspace:
-		cmp di, command
+		cmp di, command ;verifica se nenhuma letra foi digitada
 		je readStr
 
 		dec di ;deleta o char anterior
@@ -163,6 +163,9 @@ readStr:
 		jmp readStr
 
 	.done:
+		cmp di, command ;verifica se nenhuma letra foi digitada
+		je readStr
+
 		mov al, 0
 		stosb
 
@@ -188,12 +191,6 @@ printString:
 	mov bl, 03h ;cor do caractere (modo grafico)
 	int 10h
 
-	;mov ah, 86h
-	;mov cx, 1
-	;xor dx, dx
-	;mov dx, 2
-	;int 15h
-
 	jmp printString
 
 	.done:
@@ -210,27 +207,27 @@ newLine:
 	ret
 
 strcmp:
-	mov al, [si] ;grab a byte from SI
-	mov bl, [di] ;grab a byte from DI
+	mov al, [si] ;salva um byte de si
+	mov bl, [di] ;salva um byte de di
 
-	cmp al, bl ;are they equal?
-	jne .notequal ;nope, we're done.
+	cmp al, bl ;os caracteres são iguais?
+	jne .notequal ;nay
 
-	cmp al, 0 ;are both bytes (they were equal before) null?
-	je .done ;yes, we're done.
+	cmp al, 0 ;os dois caracteres são 0?
+	je .done ;yay
 
-	inc di ;increment DI
-	inc si ;increment SI
+	inc di ;incrementa di
+	inc si ;incrementa si
 
-	jmp strcmp ;loop!
+	jmp strcmp
 
 	.notequal:
-		clc ;not equal, clear the carry flag
+		clc ;reseta a flag de carry
 
 		ret
 
 	.done:
-		stc ;equal, set the carry flag
+		stc ;seta a flag de carry
 
 		ret
 

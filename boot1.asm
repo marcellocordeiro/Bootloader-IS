@@ -5,29 +5,31 @@ start:
 	xor ax, ax
 	mov ds, ax
 
+	mov ax, 0x50 ;0x50<<1 = 0x500 (início de boot2.asm)
+	mov es, ax
+	xor bx, bx ;posição = es<<1+bx
+
+	jmp reset
+
 reset:
-	mov ah, 00h ; AH = 0, codigo da funcao que reinicia o controlador de disco
-	mov dl, 0 ; numero do drive a ser resetado
+	mov ah, 00h ;reseta o controlador de disco
+	mov dl, 0 ;floppy disk
 	int 13h
+	jc reset ;se o acesso falhar, tenta novamente
 
-	jc reset ; caso aconteca algum erro, tenta novamente
-
-	mov ax, 0x50 ; ler o setor do endereco 0x500
-	mov es, ax ; segmento com dados extra
-	xor bx, bx
+	jmp load
 
 load:
-	mov ah, 0x02 ;comando de ler setor do disco
-	mov al, 1 ;quantidade de setores ocupados por boot2
-	mov ch, 0 ;trilha 0
-	mov cl, 2 ;setor 2
-	mov dh, 0 ;cabeca 0
+	mov ah, 02h ;lê um setor do disco
+	mov al, 1 ;quantidade de setores ocupados pelo boot2
+	mov ch, 0 ;track 0
+	mov cl, 2 ;sector 2
+	mov dh, 0 ;head 0
 	mov dl, 0 ;drive 0
 	int 13h
+	jc load ;se o acesso falhar, tenta novamente
 
-	jc load ;deu erro, tenta de novo
+jmp 0x50:0x0 ;pula para o setor de endereco 0x500:0 (start do boot2)
 
-jmp 0x50:0x0 ; executar o setor do endereco 0x500:0, vai para o boot2
-
-times 510-($-$$) db 0 ; boot tem que ter 512 bytes
-dw 0xaa55 ; assinatura do boot no final
+times 510-($-$$) db 0 ;512 bytes
+dw 0xaa55 ;assinatura

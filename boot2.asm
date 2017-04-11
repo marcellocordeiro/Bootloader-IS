@@ -22,43 +22,44 @@ start:
 	int 10h
 
 	mov si, string1
-	call printString ; imprimindo a primeira mensagem
+	call printString ;imprime a primeira mensagem
 	call delay
 	
 	mov si, string2
-	call printString ; imprimindo a segunda mensagem
-	call delay
-
-	mov si, string4
-	call printString
+	call printString ;imprime a segunda mensagem
 	call delay
 	
 	mov si, string3
-	call printString ; imprimindo terceira mensagem
+	call printString ;imprime a terceira mensagem
 	call delay
+	
+	mov si, string4
+	call printString ;imprime a quarta mensagem
+	call delay
+
+	mov ax, 0x7e0 ;0x7e0<<1 = 0x7e00 (início de kernel.asm)
+	mov es, ax
+	xor bx, bx ;posição es<<1+bx
 
 	jmp reset
 
 reset:
-	mov ah, 00h		;resetar os drivers de disco
-	mov dl, 0		;floppy disk pq usou dd no script
-	int 13h			;interrupção de acesso ao disco
-	jc reset		;em caso de erro, tenta de novo
+	mov ah, 00h ;reseta o controlador de disco
+	mov dl, 0 ;floppy disk
+	int 13h
+	jc reset ;se o acesso falhar, tenta novamente
 
-	mov ax, 0x7e0	;0x7e0<<1 + 0 = 0x7e00, que eh o inicio do kernel.asm
-	mov es, ax
-	xor bx, bx		;posição = es<<1+bx 	
 	jmp load
 
 load:
-	mov ah, 0x02		;comando de ler setor do disco
-	mov al, 20		;quantidade de setores ocupados por kernel
-	mov ch, 0		;trilha 0
-	mov cl, 3		;vai comecar a ler do setor 3
-	mov dh, 0		;cabeca 0
-	mov dl, 0		;drive 0
-	int 13h			;interrupcao de disco
-	jc load			;deu erro, tenta de novo
+	mov ah, 02h ;lê um setor do disco
+	mov al, 20 ;quantidade de setores ocupados pelo kernel
+	mov ch, 0 ;track 0
+	mov cl, 3 ;sector 3
+	mov dh, 0 ;head 0
+	mov dl, 0 ;drive 0
+	int 13h
+	jc load ;se o acesso falhar, tenta novamente
 
 	jmp 0x0000:0x7e00
 
