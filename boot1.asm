@@ -29,7 +29,7 @@ load:
 	int 13h
 	jc load ;se o acesso falhar, tenta novamente
 
-jmp 0x50:0x0 ;pula para o setor de endereco 0x500:0 (start do boot2)
+jmp 0x500 ;pula para o setor de endereco 0x500:0 (start do boot2)
 
 times 510-($-$$) db 0 ;512 bytes
 dw 0xaa55 ;assinatura

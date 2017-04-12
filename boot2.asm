@@ -1,5 +1,5 @@
 org 0x500
-jmp 0x0000:start
+jmp start
 
 string1: db 'Loading structures for the kernel...', 13, 10, 0
 string2: db 'Setting up protected mode...', 13, 10, 0
@@ -61,16 +61,8 @@ load:
 	int 13h
 	jc load ;se o acesso falhar, tenta novamente
 
-	jmp 0x0000:0x7e00
+	jmp 0x7e00
 
-delay:
-	mov ah, 86h
-	mov cx, 20
-	xor dx, dx
-	mov dx, 40
-	;int 15h
-	
-	ret
 
 printString:
 	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
@@ -93,3 +85,11 @@ printString:
 
 	.done:
 		ret
+delay:
+	mov ah, 86h
+	mov cx, 20
+	xor dx, dx
+	mov dx, 40
+	;int 15h
+	
+	ret

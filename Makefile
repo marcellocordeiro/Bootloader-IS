@@ -1,37 +1,43 @@
-bootdisk=disk.img
-blocksize=512
-disksize=100
-
+#primeiro estágio
 boot1=boot1
 
-# preencha esses valores para rodar o segundo estágio do bootloader
+#segundo estágio
 boot2=boot2
 boot2pos=1
 boot2size=1
 
-# preencha esses valores para rodar o kernel
+#kernel
 kernel=kernel
 kernelpos=2
 kernelsize=20
 
+bootdisk=disk.img
+blocksize=512
+disksize=100
+
 ASMFLAGS=-f bin
 file = $(bootdisk)
 
-# adicionem os targets do kernel e do segundo estágio para usar o make all com eles
-
-all: clean mydisk boot1 write_boot1 boot2 write_boot2 kernel write_kernel hexdump launchqemu
+all: clean mydisk boot1 write_boot1 boot2 write_boot2 kernel write_kernel launchqemu
 
 mydisk:
 	dd if=/dev/zero of=$(bootdisk) bs=$(blocksize) count=$(disksize) status=noxfer
+	clear
 
 boot1:
+	@echo "- boot1"
 	nasm $(ASMFLAGS) $(boot1).asm -o $(boot1).bin
+	@echo "\n"
 
 boot2:
+	@echo "- boot2"
 	nasm $(ASMFLAGS) $(boot2).asm -o $(boot2).bin
+	@echo "\n"
 
 kernel:
+	@echo "- kernel"
 	nasm $(ASMFLAGS) $(kernel).asm -o $(kernel).bin
+	@echo "\n"
 
 write_boot1:
 	dd if=$(boot1).bin of=$(bootdisk) bs=$(blocksize) count=1 conv=notrunc status=noxfer

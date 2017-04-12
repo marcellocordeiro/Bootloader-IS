@@ -62,14 +62,17 @@ start:
 	call copy
 
 main:
+	;imprime o username
 	mov si, username
-	call printString ;imprime o username
+	call printString
 
+	;imprime @OS~$
 	mov si, input
-	call printString ;imprime @OS~$
+	call printString
 
+	;recebe o comando do usuário
 	mov di, command
-	call readStr ;recebe o comando do usuário
+	call readStr
 
 	;salva o command atual em commandCopy
 	mov si, command
@@ -82,7 +85,6 @@ main:
 	call strcmp
 	jc .help
 
-	mov bh, 07h ;parametro clear (modo texto)
 	;usuário digitou clear?
 	mov si, clear_cmd
 	mov di, command
@@ -159,6 +161,26 @@ clear:
 
 	ret
 
+clearLine:
+	cmp di, command ;verifica se di está no início de command
+	je .done
+
+	dec di ;deleta o char anterior
+
+	mov al, 08h ;"imprime" o backspace
+	call printChar
+
+	mov al, ' ' ;deleta o caractere da tela
+	call printChar
+
+	mov al, 08h ;"imprime" o backspace de novo
+	call printChar
+
+	jmp clearLine
+
+	.done:
+		ret
+
 copy:
 	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
 
@@ -186,7 +208,13 @@ readStr:
 	je .prevCommand
 
 	cmp ah, 50h ;down arrow?
-	je .erase
+	je .clearLine
+
+	cmp ah, 4bh ;left arrow?
+	je readStr ;??
+
+	cmp ah, 4dh ;right arrow?
+	je readStr ;??
 
 	call printChar
 
@@ -212,7 +240,7 @@ readStr:
 		jmp readStr
 
 	.prevCommand:
-		call erase
+		call clearLine
 		
 		mov si, commandCopy
 		mov di, command
@@ -231,8 +259,8 @@ readStr:
 		dec di
 		jmp readStr
 
-	.erase:
-		call erase
+	.clearLine:
+		call clearLine
 
 		jmp readStr
 
@@ -242,26 +270,6 @@ readStr:
 
 		call newLine
 
-		ret
-
-erase:
-	cmp di, command ;verifica se di está no início de command
-	je .done
-
-	dec di ;deleta o char anterior
-
-	mov al, 08h ;"imprime" o backspace
-	call printChar
-
-	mov al, ' ' ;deleta o caractere da tela
-	call printChar
-
-	mov al, 08h ;"imprime" o backspace de novo
-	call printChar
-
-	jmp erase
-
-	.done:
 		ret
 
 printChar:
@@ -310,50 +318,6 @@ printString_Delay:
 	.done:
 		ret
 
-newLine:
-	mov ah, 0eh
-	mov al, 13 ;\n
-	int 10h
-
-	mov al, 10 ;return (início da linha)
-	int 10h
-
-	ret
-
-strcmp:
-	mov al, [si] ;salva um byte de si
-	mov bl, [di] ;salva um byte de di
-
-	cmp al, bl ;os caracteres são iguais?
-	jne .notequal ;nay
-
-	cmp al, 0 ;os dois caracteres são 0?
-	je .done ;yay
-
-	inc di ;incrementa di
-	inc si ;incrementa si
-
-	jmp strcmp
-
-	.notequal:
-		clc ;reseta a flag de carry
-
-		ret
-
-	.done:
-		stc ;seta a flag de carry
-
-		ret
-
-delay:
-	mov ah, 86h
-	mov cx, 20
-	xor dx, dx
-	mov dx, 40
-	int 15h
-	
-	ret
-
 printString_Delay_C:
 	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
 
@@ -384,6 +348,88 @@ printString_Delay_C:
 
 	.done:
 		ret
+
+strcmp:
+	mov al, [si] ;salva um byte de si
+	mov bl, [di] ;salva um byte de di
+
+	cmp al, bl ;os caracteres são iguais?
+	jne .notequal ;nay
+
+	cmp al, 0 ;os dois caracteres são 0?
+	je .done ;yay
+
+	inc di ;incrementa di
+	inc si ;incrementa si
+
+	jmp strcmp
+
+	.notequal:
+		clc ;reseta a flag de carry
+
+		ret
+
+	.done:
+		stc ;seta a flag de carry
+
+		ret
+
+newLine:
+	mov ah, 0eh
+	mov al, 13 ;\n
+	int 10h
+
+	mov al, 10 ;return (início da linha)
+	int 10h
+
+	ret
+
+delay:
+	mov ah, 86h
+	mov cx, 20
+	xor dx, dx
+	mov dx, 40
+	int 15h
+	
+	ret
+
+delay_p:
+	mov ah, 86h
+	mov cx, 2
+	xor dx, dx
+	mov dx, 40
+	int 15h
+	
+	ret
+
+changeColor:
+	;background color
+	mov ah, 0bh
+	mov bh, 00h
+	int 10h
+	call delay_p
+
+	ret
+
+blink:
+	;pisca cores alokado
+
+	call clearVideo
+
+	mov bl, [di]
+	cmp bl, 01h
+	je .resetColor
+	jne .continue
+
+	.resetColor:
+		mov di, bgColors
+		jmp .continue
+
+	.continue:
+		call changeColor
+		inc di
+
+	ret
 
 bsod:
 	;video mode
@@ -491,46 +537,6 @@ bsod_:
 	mov si, bsod7
 	call printString_Delay
 	call delay
-
-
-	ret
-
-delay_p:
-	mov ah, 86h
-	mov cx, 2
-	xor dx, dx
-	mov dx, 40
-	int 15h
-	
-	ret
-
-changeColor:
-	;background color
-	mov ah, 0bh
-	mov bh, 00h
-	int 10h
-	call delay_p
-
-	ret
-
-blink:
-	;pisca cores alokado
-
-	;mov bh, 00h ;parametro clear (modo video)
-	call clearVideo
-
-	mov bl, [di]
-	cmp bl, 01h
-	je .resetColor
-	jne .continue
-
-	.resetColor:
-		mov di, bgColors
-		jmp .continue
-
-	.continue:
-		call changeColor
-		inc di
 
 	ret
 
