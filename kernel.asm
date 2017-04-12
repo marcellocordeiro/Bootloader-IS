@@ -78,6 +78,8 @@ loopp:
 	mov si, input
 	call printString ;imprime @OS~$
 
+	xor cl, cl
+	clc
 	mov di, command
 	call readStr ;recebe o comando do usuário
 
@@ -126,7 +128,7 @@ loopp:
 		mov si, shutdown_cmd
 		call printString
 		call newLine
-		
+
 		jmp loopp
 
 	.clear:
@@ -204,13 +206,14 @@ readStr:
 		jmp readStr
 
 	.prevCommand:
-		jc readStr
-		stc
+		cmp cl, 1
+		je readStr
 
 		mov si, commandCopy
 		mov di, command
 
-		
+		mov cl, 1
+
 		.copyCommand:
 			lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
 
