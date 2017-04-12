@@ -221,6 +221,7 @@ printString_Delay:
 
 	mov ah, 0eh ;imprime o caractere de al
 	mov bh, 00h
+	mov bl, byte[stringColor]
 	;mov bl, 03h ;cor do caractere (modo grafico)
 	int 10h
 
@@ -329,10 +330,10 @@ bsod_:
 	mov byte[stringColor], 0fh ;parametro printString_Delay_C (cor)
 
 	mov si, bsod1
-	call printString_Delay_C
+	call printString_Delay
 
 	mov si, bsod2
-	call printString_Delay_C
+	call printString_Delay
 
 	mov si, bsod3
 	call printString_Delay_C
