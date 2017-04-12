@@ -24,9 +24,8 @@ bsod6 db '            Just sit tight while I wipe all your data', 13, 10, 0
 bsod7 db '            ur loss, playboy!', 13, 10, 0
 
 ;variaveis aux
-var1 times 8 db 0
-var2 times 8 db 0
-var db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh, 01h
+stringColor times 8 db 0
+bgColors db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh, 01h
 
 start:
 	xor ax, ax
@@ -118,7 +117,7 @@ loopp:
 		jmp loopp
 
 	.shutdown:
-		call bsod ;;;;; call bsod_
+		call bsod_ ;;;;; call bsod_
 
 		jmp done
 
@@ -288,7 +287,7 @@ printString_Delay_C:
 
 	mov ah, 0eh ;imprime o caractere de al
 	mov bh, 00h
-	mov bl, byte[var1]
+	mov bl, byte[stringColor]
 	;mov bl, 03h ;cor do caractere (modo grafico)
 	int 10h
 
@@ -299,7 +298,7 @@ printString_Delay_C:
 	jne .continue
 
 	.resetColor:
-		mov di, var
+		mov di, bgColors
 		jmp .continue
 
 	.continue:
@@ -324,34 +323,29 @@ bsod_:
 	int 10h
 
 	;di aponta para o vetor das cores do bg
-	mov di, var
+	mov di, bgColors
 
 	;imprime strings (invadido)
-	mov byte[var1], 0fh ;parametro printString_Delay_C (cor)
+	mov byte[stringColor], 0fh ;parametro printString_Delay_C (cor)
 
 	mov si, bsod1
-	mov byte[var2], 06h
 	call printString_Delay_C
 
 	mov si, bsod2
-	mov byte[var2], 04h
 	call printString_Delay_C
 
 	mov si, bsod3
-	mov byte[var2], 0bh
 	call printString_Delay_C
 
 	mov si, bsod4
-	mov byte[var2], 03h
 	call printString_Delay_C
-
 
 	;pisca colorido
 	call blink
 
 
 	;imprime strings (invasor)
-	mov byte[var1], 0eh ;parametro printString_Delay_C (cor)
+	mov byte[stringColor], 0eh ;parametro printString_Delay_C (cor)
 
 	mov si, bsod5
 	call printString_Delay_C
@@ -361,6 +355,17 @@ bsod_:
 
 	mov si, bsod7
 	call printString_Delay_C
+
+	;video mode
+	mov ah, 00h
+	mov al, 13h
+	int 10h
+
+	;background
+	mov ah, 0bh
+	mov bh, 00h
+	mov bl, 00h
+	int 10h
 
 	ret
 
@@ -448,7 +453,7 @@ blink:
 	jne .continue
 
 	.resetColor:
-		mov di, var
+		mov di, bgColors
 		jmp .continue
 
 	.continue:
