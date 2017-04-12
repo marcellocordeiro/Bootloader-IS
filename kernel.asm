@@ -213,6 +213,8 @@ readStr:
 		cmp cl, 1
 		je readStr
 
+		call erase
+		
 		mov si, commandCopy
 		mov di, command
 
@@ -239,6 +241,27 @@ readStr:
 		call newLine
 
 		ret
+
+erase:
+	cmp di, command ;verifica se nenhuma letra foi digitada
+	je .done
+
+	dec di ;deleta o char anterior
+
+	mov al, 08h ;"imprime" o backspace
+	call printChar
+
+	mov al, ' ' ;deleta o caractere da tela
+	call printChar
+
+	mov al, 08h ;"imprime" o backspace de novo
+	call printChar
+
+	jmp erase
+
+	.done:
+		ret
+
 
 printChar:
 	mov ah, 0eh ;imprime o caractere de al
