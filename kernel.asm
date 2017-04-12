@@ -163,9 +163,6 @@ readStr:
 		jmp readStr
 
 	.done:
-		cmp di, command ;verifica se nenhuma letra foi digitada
-		je readStr
-
 		mov al, 0
 		stosb
 
