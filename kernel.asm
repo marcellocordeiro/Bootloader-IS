@@ -9,25 +9,44 @@ hello db 'Enter your username: ', 0
 input db '@OS:~$ ', 0
 invalidCommand db 'Invalid command. Type ', 39, 'help', 39, ' for a list of valid commands', 13, 10, 0
 
+;commands
 help_cmd db 'help', 0
 clear_cmd db 'clear', 0
 shutdown_cmd db 'shutdown', 0
+
+;bsod
+bsod1 db 10, 10, 10, 10, '            Wh-what happened?', 13, 10, 0
+bsod2 db '            Did I just crash?', 13, 10, 0
+bsod3 db '            ... or am I being invaded?', 13, 10, 0
+bsod4 db '            Oh sh...', 13, 10, 10, 10, 0
+bsod5 db 10, 10, 10, 10, '            Hello, and thank you for letting me install a virus', 13, 10, 0
+bsod6 db '            Just sit tight while I wipe all your data', 13, 10, 0
+bsod7 db '            ur loss, playboy!', 13, 10, 0
+
+;variaveis aux
+var1 times 8 db 0
+var2 times 8 db 0
+var db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh, 01h
 
 start:
 	xor ax, ax
 	mov ds, ax
 	mov es, ax
 
-	;video mode
+	;text mode
 	mov ah, 00h
-	mov al, 03h ;text mode
+	mov al, 03h
 	int 10h
+
+	mov bh, 07h;parametro clear
 
 	call clear
 
 	mov ah, 01h
 	mov cx, 07h
 	int 10h
+
+	mov cx, 0
 
 	mov si, hello
 	call printString
@@ -99,12 +118,9 @@ loopp:
 		jmp loopp
 
 	.shutdown:
-		mov si, debug
-		call printString
+		call bsod ;;;;; call bsod_
 
-		;jmp done
-
-		jmp loopp
+		jmp done
 
 	.invalidCommand:
 		mov si, invalidCommand
@@ -115,7 +131,7 @@ loopp:
 clear:
 	mov ah, 07h ;scroll down
 	mov al, 00h ;scroll the whole window
-	mov bh, 07h ;00h = modo de vídeo, 07h = modo de texto  ; character attribute = white on black
+	;mov bh, 07h ;00h = modo de vídeo, 07h = modo de texto  ; character attribute = white on black
 
 	;upper left corner
 	mov ch, 00h ;row = 0
@@ -190,10 +206,32 @@ printString:
 
 	mov ah, 0eh ;imprime o caractere de al
 	mov bh, 00h
-	mov bl, 03h ;cor do caractere (modo grafico)
+	;mov bl, 03h ;cor do caractere (modo grafico)
 	int 10h
 
 	jmp printString
+
+	.done:
+		ret
+
+printString_Delay:
+	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
+
+	cmp al, 0 ;0 é o código do \0
+	je .done ;se cmp for verdadeiro (verifica no registrador de flags)
+
+	mov ah, 0eh ;imprime o caractere de al
+	mov bh, 00h
+	;mov bl, 03h ;cor do caractere (modo grafico)
+	int 10h
+
+	;delay
+	mov ah, 86h
+	mov cx, 1
+	mov dx, 2
+	int 15h
+
+	jmp printString_Delay
 
 	.done:
 		ret
@@ -232,6 +270,192 @@ strcmp:
 		stc ;seta a flag de carry
 
 		ret
+
+delay:
+	mov ah, 86h
+	mov cx, 20
+	xor dx, dx
+	mov dx, 40
+	int 15h
+	
+	ret
+
+printString_Delay_C:
+	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
+
+	cmp al, 0 ;0 é o código do \0
+	je .done ;se cmp for verdadeiro (verifica no registrador de flags)
+
+	mov ah, 0eh ;imprime o caractere de al
+	mov bh, 00h
+	mov bl, byte[var1]
+	;mov bl, 03h ;cor do caractere (modo grafico)
+	int 10h
+
+	;mudar cor do fundo
+	mov bl, byte[di]
+	cmp bl, 01h
+	je .resetColor
+	jne .continue
+
+	.resetColor:
+		mov di, var
+		jmp .continue
+
+	.continue:
+		call changeColor
+		inc di
+
+	jmp printString_Delay_C
+
+	.done:
+		ret
+
+bsod_:
+	;video mode
+	mov ah, 00h
+	mov al, 12h
+	int 10h
+
+	;background
+	mov ah, 0bh
+	mov bh, 00h
+	mov bl, 01h
+	int 10h
+
+	;di aponta para o vetor das cores do bg
+	mov di, var
+
+	;imprime strings (invadido)
+	mov byte[var1], 0fh ;parametro printString_Delay_C (cor)
+
+	mov si, bsod1
+	mov byte[var2], 06h
+	call printString_Delay_C
+
+	mov si, bsod2
+	mov byte[var2], 04h
+	call printString_Delay_C
+
+	mov si, bsod3
+	mov byte[var2], 0bh
+	call printString_Delay_C
+
+	mov si, bsod4
+	mov byte[var2], 03h
+	call printString_Delay_C
+
+
+	;pisca colorido
+	call blink
+
+
+	;imprime strings (invasor)
+	mov byte[var1], 0eh ;parametro printString_Delay_C (cor)
+
+	mov si, bsod5
+	call printString_Delay_C
+
+	mov si, bsod6
+	call printString_Delay_C
+
+	mov si, bsod7
+	call printString_Delay_C
+
+	ret
+
+bsod:
+	;video mode
+	mov ah, 00h
+	mov al, 12h
+	int 10h
+
+	;background
+	mov ah, 0bh
+	mov bh, 00h
+	mov bl, 01h
+	int 10h
+
+	;imprime strings (invadido)
+	mov bl, 0fh ;parametro printString_Delay (cor)
+
+	mov si, bsod1
+	call printString_Delay
+	call delay
+
+	mov si, bsod2
+	call printString_Delay
+	call delay
+
+	mov si, bsod3
+	call printString_Delay
+	call delay
+
+	mov si, bsod4
+	call printString_Delay
+	call delay
+
+
+	;pisca colorido
+	call blink
+
+
+	;imprime strings (invasor)
+	mov bl, 0eh ;parametro printString_Delay (cor)
+
+	mov si, bsod5
+	call printString_Delay
+	call delay
+
+	mov si, bsod6
+	call printString_Delay
+	call delay
+
+	mov si, bsod7
+	call printString_Delay
+	call delay
+
+
+	ret
+
+delay_p:
+	mov ah, 86h
+	mov cx, 2
+	xor dx, dx
+	mov dx, 40
+	int 15h
+	
+	ret
+
+changeColor:
+	;background color
+	mov ah, 0bh
+	mov bh, 00h
+	int 10h
+	call delay_p
+
+	ret
+
+blink:
+	;pisca cores alokado
+
+	mov bh, 00h ;parametro clear
+	call clear
+
+	mov bl, [di]
+	cmp bl, 01h
+	je .resetColor
+	jne .continue
+
+	.resetColor:
+		mov di, var
+		jmp .continue
+
+	.continue:
+		call changeColor
+		inc di
+
+	ret
 
 done:
 	jmp $
