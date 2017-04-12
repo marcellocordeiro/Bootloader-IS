@@ -79,6 +79,11 @@ loopp:
 	call strcmp
 	jc .shutdown
 
+	;usuário não digitou nada?
+	mov si, command
+	cmp byte[si], 0
+	je loopp
+
 	;usuário não digitou nenhum comando válio
 	jmp .invalidCommand
 
