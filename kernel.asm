@@ -119,9 +119,14 @@ loopp:
 	jmp .invalidCommand
 
 	.help:
-		mov si, debug
+		mov si, clear_cmd
 		call printString
+		call newLine
 
+		mov si, shutdown_cmd
+		call printString
+		call newLine
+		
 		jmp loopp
 
 	.clear:
