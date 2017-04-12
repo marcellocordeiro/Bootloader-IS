@@ -5,11 +5,12 @@ username times 32 db 0
 command times 32 db 0
 commandCopy times 32 db 0
 
-
+;strings
 debug db 'fml', 13, 10, 0
 hello db 'Enter your username: ', 0
 input db '@OS:~$ ', 0
 invalidCommand db 'Invalid command. Type ', 39, 'help', 39, ' for a list of valid commands', 13, 10, 0
+nothingHere db 'nothing here, sorry', 0
 
 ;commands
 help_cmd db 'help', 0
@@ -39,60 +40,41 @@ start:
 	mov al, 03h
 	int 10h
 
-	mov bh, 07h;parametro clear (modo texto)
-
-	call clear
-
+	;blinking cursor: full block
 	mov ah, 01h
 	mov cx, 07h
 	int 10h
 
-	mov cx, 0
+	call clearTxt
 
 	mov si, hello
 	call printString
+
+	mov si, nothingHere
+	mov di, commandCopy
+	call copy
 
 	mov di, command
 	call readStr
 
 	mov si, command
 	mov di, username
+	call copy
 
-	.copyUsername:
-		lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
-
-		stosb ;salva al em di
-
-		cmp al, 0 ;0 é o código do \0
-		je .done ;se cmp for verdadeiro (verifica no registrador de flags)
-
-		jmp .copyUsername
-
-		.done:
-			jmp loopp
-
-loopp:
+main:
 	mov si, username
 	call printString ;imprime o username
 
 	mov si, input
 	call printString ;imprime @OS~$
 
-	xor cl, cl
-	clc
 	mov di, command
 	call readStr ;recebe o comando do usuário
 
+	;salva o command atual em commandCopy
 	mov si, command
 	mov di, commandCopy
-
-	.copyCommand:
-		lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
-
-		stosb ;salva al em di
-
-		cmp al, 0 ;0 é o código do \0
-		jne .copyCommand ;se cmp for verdadeiro (verifica no registrador de flags)
+	call copy
 
 	;usuário digitou help?
 	mov si, help_cmd
@@ -116,7 +98,7 @@ loopp:
 	;usuário não digitou nada?
 	mov si, command
 	cmp byte[si], 0
-	je loopp
+	je main
 
 	;usuário não digitou nenhum comando válio
 	jmp .invalidCommand
@@ -130,15 +112,15 @@ loopp:
 		call printString
 		call newLine
 
-		jmp loopp
+		jmp main
 
 	.clear:
-		call clear
+		call clearTxt
 
-		jmp loopp
+		jmp main
 
 	.shutdown:
-		call bsod_ ;;;;; call bsod_
+		call bsod ;;;;; call bsod_
 
 		jmp done
 
@@ -146,12 +128,19 @@ loopp:
 		mov si, invalidCommand
 		call printString
 
-		jmp loopp
+		jmp main
+
+clearTxt:
+	mov bh, 07h ;00h = modo de vídeo, 07h = modo de texto  ; character attribute = white on black
+	jmp clear
+
+clearVideo:
+	mov bh, 00h
+	jmp clear
 
 clear:
 	mov ah, 07h ;scroll down
 	mov al, 00h ;scroll the whole window
-	;mov bh, 07h ;00h = modo de vídeo, 07h = modo de texto  ; character attribute = white on black
 
 	;upper left corner
 	mov ch, 00h ;row = 0
@@ -170,6 +159,19 @@ clear:
 
 	ret
 
+copy:
+	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
+
+	stosb ;salva al em di
+
+	cmp al, 0 ;0 é o código do \0
+	je .done ;se cmp for verdadeiro (verifica no registrador de flags)
+
+	jmp copy
+
+	.done:
+		ret
+
 readStr:
 	mov ah, 00h ;coloca o caractere lido do teclado no registrador al
 	int 16h
@@ -184,7 +186,7 @@ readStr:
 	je .prevCommand
 
 	cmp ah, 50h ;down arrow?
-	;je .
+	je .erase
 
 	call printChar
 
@@ -210,15 +212,10 @@ readStr:
 		jmp readStr
 
 	.prevCommand:
-		cmp cl, 1
-		je readStr
-
 		call erase
 		
 		mov si, commandCopy
 		mov di, command
-
-		mov cl, 1
 
 		.copyCommand:
 			lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
@@ -234,6 +231,11 @@ readStr:
 		dec di
 		jmp readStr
 
+	.erase:
+		call erase
+
+		jmp readStr
+
 	.done:
 		mov al, 0
 		stosb
@@ -243,7 +245,7 @@ readStr:
 		ret
 
 erase:
-	cmp di, command ;verifica se nenhuma letra foi digitada
+	cmp di, command ;verifica se di está no início de command
 	je .done
 
 	dec di ;deleta o char anterior
@@ -261,7 +263,6 @@ erase:
 
 	.done:
 		ret
-
 
 printChar:
 	mov ah, 0eh ;imprime o caractere de al
@@ -384,7 +385,7 @@ printString_Delay_C:
 	.done:
 		ret
 
-bsod_:
+bsod:
 	;video mode
 	mov ah, 00h
 	mov al, 12h
@@ -442,7 +443,7 @@ bsod_:
 
 	ret
 
-bsod:
+bsod_:
 	;video mode
 	mov ah, 00h
 	mov al, 12h
@@ -473,10 +474,8 @@ bsod:
 	call printString_Delay
 	call delay
 
-
 	;pisca colorido
 	call blink
-
 
 	;imprime strings (invasor)
 	mov bl, 0eh ;parametro printString_Delay (cor)
@@ -517,8 +516,8 @@ changeColor:
 blink:
 	;pisca cores alokado
 
-	mov bh, 00h ;parametro clear (modo video)
-	call clear
+	;mov bh, 00h ;parametro clear (modo video)
+	call clearVideo
 
 	mov bl, [di]
 	cmp bl, 01h
