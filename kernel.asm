@@ -39,7 +39,7 @@ start:
 	mov al, 03h
 	int 10h
 
-	mov bh, 07h;parametro clear
+	mov bh, 07h;parametro clear (modo texto)
 
 	call clear
 
@@ -100,6 +100,7 @@ loopp:
 	call strcmp
 	jc .help
 
+	mov bh, 07h ;parametro clear (modo texto)
 	;usuário digitou clear?
 	mov si, clear_cmd
 	mov di, command
@@ -226,8 +227,6 @@ readStr:
 		call printString
 
 		jmp readStr
-
-
 
 	.done:
 		mov al, 0
@@ -493,7 +492,7 @@ changeColor:
 blink:
 	;pisca cores alokado
 
-	mov bh, 00h ;parametro clear
+	mov bh, 00h ;parametro clear (modo video)
 	call clear
 
 	mov bl, [di]
