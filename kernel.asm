@@ -180,8 +180,11 @@ readStr:
 	cmp al, 08h ;backspace?
 	je .backspace
 
-	cmp ah, 48h
+	cmp ah, 48h ;up arrow?
 	je .prevCommand
+
+	cmp ah, 50h ;down arrow?
+	;je .
 
 	call printChar
 
@@ -226,6 +229,7 @@ readStr:
 		mov si, command
 		call printString
 
+		dec di
 		jmp readStr
 
 	.done:
@@ -233,8 +237,6 @@ readStr:
 		stosb
 
 		call newLine
-
-		clc
 
 		ret
 
