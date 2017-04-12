@@ -3,6 +3,8 @@ jmp start
 
 username times 32 db 0
 command times 32 db 0
+commandCopy times 32 db 0
+
 
 debug db 'fml', 13, 10, 0
 hello db 'Enter your username: ', 0
@@ -78,6 +80,17 @@ loopp:
 
 	mov di, command
 	call readStr ;recebe o comando do usuário
+
+	mov si, command
+	mov di, commandCopy
+
+	.copyCommand:
+		lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
+
+		stosb ;salva al em di
+
+		cmp al, 0 ;0 é o código do \0
+		jne .copyCommand ;se cmp for verdadeiro (verifica no registrador de flags)
 
 	;usuário digitou help?
 	mov si, help_cmd
@@ -159,6 +172,9 @@ readStr:
 	cmp al, 08h ;backspace?
 	je .backspace
 
+	cmp ah, 48h
+	je .prevCommand
+
 	call printChar
 
 	stosb
@@ -182,11 +198,36 @@ readStr:
 
 		jmp readStr
 
+	.prevCommand:
+		jc readStr
+		stc
+
+		mov si, commandCopy
+		mov di, command
+
+		
+		.copyCommand:
+			lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
+
+			stosb ;salva al em di
+
+			cmp al, 0 ;0 é o código do \0
+			jne .copyCommand ;se cmp for verdadeiro (verifica no registrador de flags)
+
+		mov si, command
+		call printString
+
+		jmp readStr
+
+
+
 	.done:
 		mov al, 0
 		stosb
 
 		call newLine
+
+		clc
 
 		ret
 
@@ -343,7 +384,6 @@ bsod_:
 
 	;pisca colorido
 	call blink
-
 
 	;imprime strings (invasor)
 	mov byte[stringColor], 0eh ;parametro printString_Delay_C (cor)
