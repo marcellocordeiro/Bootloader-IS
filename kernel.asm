@@ -48,6 +48,7 @@ strLost db 'You Lost!', 13, 10, 0
 posx times 8 db 0
 posy times 8 db 0
 
+pressAny db 'Press any key to exit', 13, 10, 0
 
 start:
 	xor ax, ax
@@ -66,9 +67,9 @@ start:
 
 	call clearTxt
 
-	;;;;;;
-	call mineSweeper
-	jmp done
+	;;;;;;	teste do mineSweeper
+	;call mineSweeper
+	;jmp done
 	;;;;;;
 
 	mov si, hello
@@ -313,7 +314,7 @@ readStr:
 
 printChar:
 	mov ah, 0eh ;imprime o caractere de al
-	mov bl, 02h ;cor do caractere (modo grafico)
+	mov bl, 03h ;cor do caractere (modo grafico)	;usado no mineSweeper
 	int 10h
 
 	ret
@@ -326,7 +327,7 @@ printString:
 
 	mov ah, 0eh ;imprime o caractere de al
 	mov bh, 00h
-	;mov bl, 03h ;cor do caractere (modo grafico)
+	mov bl, 03h ;cor do caractere (modo grafico)	;usado no mineSweeper
 	int 10h
 
 	jmp printString
@@ -581,13 +582,8 @@ bsod_:
 
 mineSweeper:
 	;video mode
-	;mov ah, 00h
-	;mov al, 12h
-	;int 10h
-
-	;text mode
 	mov ah, 00h
-	mov al, 03h
+	mov al, 12h
 	int 10h
 
 	mov cx, 9
@@ -598,12 +594,15 @@ mineSweeper:
 
 	mov ah, 0 ; ler um char
 	int 16h
+	call printChar
 
 	sub al, '0'
 	mov byte[posx], al
 
 	mov ah, 0 ; ler um char
 	int 16h
+	call printChar
+	call delay		;muda de cor! (pq bl (parametro da cor) é alterado em delay)
 
 	sub al, '0'
 	mov byte[posy], al
@@ -636,14 +635,15 @@ mineSweeper:
 	;je .linha9
 
 	.linha1:
-		cmp byte[posy], 7 ;bomba
-		je lost
+		;cmp byte[posy], 7 ;bomba
+		;je lost
 
 		xor bx, bx
 		mov bl, byte[posy]
 		add bl, bl
 		cmp byte[linha1+bx], 254
-		call clearTxt
+		;call clearTxt
+		call clearVideo
 
 
 		je lost
@@ -706,8 +706,6 @@ mineSweeper:
 	jmp main
 
 lost:
-	call clearTxt
-
 	;imprime todas as linhas
 	mov si, linha1
 	call printString
@@ -736,8 +734,25 @@ lost:
 	mov si, linha9
 	call printString
 
+	call newLine ;\n
+
+	;imprmie msg
 	mov si, strLost
 	call printString
+	call newLine ;\n
+
+	;volta pro terminal
+	mov si, pressAny
+	call printString
+
+	mov ah, 0	;espera ocupada
+	int 16h
+
+	;text mode
+	mov ah, 00h
+	mov al, 03h
+	int 10h
+
 	jmp main
 
 done:
