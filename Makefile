@@ -18,7 +18,7 @@ disksize=100
 ASMFLAGS=-f bin
 file = $(bootdisk)
 
-all: clean mydisk boot1 write_boot1 boot2 write_boot2 kernel write_kernel launchqemu
+all: clean mydisk boot1 boot2 kernel write_boot1 write_boot2 write_kernel launchqemu
 
 mydisk:
 	dd if=/dev/zero of=$(bootdisk) bs=$(blocksize) count=$(disksize) status=noxfer

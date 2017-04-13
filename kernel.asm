@@ -34,14 +34,14 @@ bgColors db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh
 ; MINESWEEPER
 linha0: db '_ _ _ _ _ _ _ _ _', 13, 10, 0 ; linha vazia para tabuleiro inicial
 
-linha1 db '_ _ _ _ _ 1 3 ',254 ,' 2', 13, 10, 0
-linha2 db '_ _ _ _ 1 2 ',254,' ', 254,' 2', 13, 10, 0
-linha3 db '_ _ _ _ 1 ', 254, ' 3 2 1', 13, 10, 0
+linha1 db '_ _ _ _ _ 1 3 o 2', 13, 10, 0
+linha2 db '_ _ _ _ 1 2 o o 2', 13, 10, 0
+linha3 db '_ _ _ _ 1 o 3 2 1', 13, 10, 0
 linha4 db '_ _ _ _ 1 1 1 _ _', 13, 10, 0
 linha5 db '1 1 _ _ _ _ _ _ _', 13, 10, 0
-linha6 db 254, ' 3 1 1 1 1 2 1 1', 13, 10, 0
-linha7 db 254, ' 3 ', 254, ' 1 1 ', 254, ' 2 ', 254, ' 2', 13, 10, 0
-linha8 db '1 2 1 1 1 1 2 2 ', 254, 13, 10, 0
+linha6 db 'o 3 1 1 1 1 2 1 1', 13, 10, 0
+linha7 db 'o 3 o 1 1 o 2 o 2', 13, 10, 0
+linha8 db '1 2 1 1 1 1 2 2 o', 13, 10, 0
 linha9 db '_ _ _ _ _ _ _ 1 1', 13, 10, 0
 strLost db 'You Lost!', 13, 10, 0
 
@@ -66,11 +66,6 @@ start:
 	int 10h
 
 	call clearTxt
-
-	;;;;;;	teste do mineSweeper
-	;call mineSweeper
-	;jmp done
-	;;;;;;
 
 	mov si, hello
 	call printString
@@ -133,7 +128,7 @@ main:
 	cmp byte[si], 0
 	je main
 
-	;usuário não digitou nenhum comando válio
+	;usuário não digitou nenhum comando válido
 	jmp .invalidCommand
 
 	.help:
@@ -162,7 +157,7 @@ main:
 		jmp done
 
 	.minesweeper:
-		call mineSweeper
+		call mineSweeperSetup
 
 		jmp main
 
@@ -284,14 +279,7 @@ readStr:
 		
 		mov si, commandCopy
 		mov di, command
-
-		.copyCommand:
-			lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
-
-			stosb ;salva al em di
-
-			cmp al, 0 ;0 é o código do \0
-			jne .copyCommand ;se cmp for verdadeiro (verifica no registrador de flags)
+		call copy
 
 		mov si, command
 		call printString
@@ -580,11 +568,69 @@ bsod_:
 
 	ret
 
-mineSweeper:
+moveCursor:
+	cmp ah, 48h ;up arrow?
+	je .up
+
+	cmp ah, 50h ;down arrow?
+	je .down
+
+	cmp ah, 4bh ;left arrow?
+	je .left
+
+	cmp ah, 4dh ;right arrow?
+	je .right
+
+	ret
+
+	;ah = 02h, bh = page number, dh = row, dl = column
+
+	.up:
+		mov ah, 02h
+		xor bx, bx
+		dec dh
+		int 10h
+
+		mov byte[posy], dh
+
+		ret
+
+	.down:
+		mov ah, 02h
+		xor bx, bx
+		inc dh
+		int 10h
+
+		mov byte[posy], dh
+
+		ret
+
+	.left:
+		mov ah, 02h
+		xor bx, bx
+		dec dl
+		int 10h
+
+		mov byte[posx], dl
+
+		ret
+
+	.right:
+		mov ah, 02h
+		xor bx, bx
+		inc dl
+		int 10h
+		
+		mov byte[posx], dl
+
+		ret
+
+mineSweeperSetup:
 	;video mode
-	mov ah, 00h
-	mov al, 12h
-	int 10h
+	;mov ah, 00h
+	;mov al, 12h
+	;int 10h
+	call clearTxt
 
 	mov cx, 9
 	inicio:
@@ -592,120 +638,166 @@ mineSweeper:
 		call printString
 	loop inicio
 
-	mov ah, 0 ; ler um char
+	;coloca o cursor no início da tela
+	mov ah, 02h
+	xor bx, bx
+	xor dx, dx
+	int 10h
+
+	mov byte[posx], 0
+	mov byte[posy], 0
+
+	jmp mineSweeper
+
+mineSweeper:
+	mov ah, 00h
 	int 16h
-	call printChar
 
-	sub al, '0'
-	mov byte[posx], al
+	mov dl, byte[posx]
+	mov dh, byte[posy]
+	call moveCursor
 
-	mov ah, 0 ; ler um char
-	int 16h
-	call printChar
-	call delay		;muda de cor! (pq bl (parametro da cor) é alterado em delay)
+	cmp al, 0dh
+	je update
 
-	sub al, '0'
-	mov byte[posy], al
+	jmp mineSweeper
 
-	cmp byte[posx], 0
+update:
+	;call delay ;muda de cor! (pq bl (parametro da cor) é alterado em delay)
+
+	cmp byte[posy], 0
 	je .linha1
 
-	cmp byte[posx], 1
+	cmp byte[posy], 1
 	je .linha2
 
-	cmp byte[posx], 2
+	cmp byte[posy], 2
 	je .linha3
 
-	cmp byte[posx], 3
+	cmp byte[posy], 3
 	je .linha4
 
-	cmp byte[posx], 4
+	cmp byte[posy], 4
 	je .linha5
 
-	cmp byte[posx], 5
+	cmp byte[posy], 5
 	je .linha6
 
-	cmp byte[posx], 6
+	cmp byte[posy], 6
 	je .linha7
 
-	cmp byte[posx], 7
+	cmp byte[posy], 7
 	je .linha8
 
-	;cmp byte[posx], 8
-	;je .linha9
-
 	.linha1:
-		;cmp byte[posy], 7 ;bomba
-		;je lost
-
 		xor bx, bx
-		mov bl, byte[posy]
-		add bl, bl
-		cmp byte[linha1+bx], 254
-		;call clearTxt
-		call clearVideo
-
-
+		mov bl, byte[posx]
+		;add bl, bl
+		
+		cmp byte[linha1+bx], 'o'
 		je lost
+
+		mov al, byte[linha1+bx]
+
+		jmp .updateCell
 
 	.linha2:
-		cmp byte[posy], 6 ;bomba
+		xor bx, bx
+		mov bl, byte[posx]
+		;add bl, bl
+		
+		cmp byte[linha2+bx], 'o'
 		je lost
-		cmp byte[posy], 7
-		je lost
+
+		mov al, byte[linha2+bx]
+
+		jmp .updateCell
+
 	.linha3:
-		cmp byte[posy], 5 ;bomba
+		xor bx, bx
+		mov bl, byte[posx]
+		;add bl, bl
+		
+		cmp byte[linha3+bx], 'o'
 		je lost
+
+		mov al, byte[linha3+bx]
+
+		jmp .updateCell
+
 	.linha4:
-		mov si, linha4
+		xor bx, bx
+		mov bl, byte[posx]
+		;add bl, bl
+		
+		cmp byte[linha4+bx], 'o'
+		je lost
+
+		mov al, byte[linha4+bx]
+
+		jmp .updateCell
+
 	.linha5:
-		mov si, linha5
+		xor bx, bx
+		mov bl, byte[posx]
+		;add bl, bl
+		
+		cmp byte[linha5+bx], 'o'
+		je lost
+
+		mov al, byte[linha5+bx]
+
+		jmp .updateCell
+
 	.linha6:
-		cmp byte[posy], 0
+		xor bx, bx
+		mov bl, byte[posx]
+		;add bl, bl
+		
+		cmp byte[linha6+bx], 'o'
 		je lost
+
+		mov al, byte[linha6+bx]
+
+		jmp .updateCell
+
 	.linha7:
-		cmp byte[posy], 0
+		xor bx, bx
+		mov bl, byte[posx]
+		;add bl, bl
+		
+		cmp byte[linha7+bx], 'o'
 		je lost
-		cmp byte[posy], 2
-		je lost
-		cmp byte[posy], 5
-		je lost
-		cmp byte[posy], 7
-		je lost
+
+		mov al, byte[linha7+bx]
+
+		jmp .updateCell
+
 	.linha8:
-		cmp byte[posy], 8
+		xor bx, bx
+		mov bl, byte[posx]
+		;add bl, bl
+		
+		cmp byte[linha8+bx], 'o'
 		je lost
 
-	;mov si, linha1
-	;call printString
+		mov al, byte[linha8+bx]
 
-	;mov si, linha2
-	;call printString
+		jmp .updateCell
 
-	;mov si, linha3
-	;call printString
+	.updateCell:
+		;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
+		mov ah, 09h
+		;mov al, byte[linhaX+bx] ;feito antes
+		mov bh, 00h
+		mov bl, 00h
+		xor cx, cx
+		int 10h
 
-	;mov si, linha4
-	;call printString
-
-	;mov si, linha5
-	;call printString
-
-	;mov si, linha6
-	;call printString
-
-	;mov si, linha7
-	;call printString
-
-	;mov si, linha8
-	;call printString
-
-	;mov si, linha9
-	;call printString
-
-	jmp main
+	jmp mineSweeper
 
 lost:
+	call clearTxt
 	;imprime todas as linhas
 	mov si, linha1
 	call printString
@@ -747,11 +839,6 @@ lost:
 
 	mov ah, 0	;espera ocupada
 	int 16h
-
-	;text mode
-	mov ah, 00h
-	mov al, 03h
-	int 10h
 
 	jmp main
 
