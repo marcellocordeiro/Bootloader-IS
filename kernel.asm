@@ -32,7 +32,7 @@ stringColor times 8 db 0
 bgColors db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh, 01h
 
 ; MINESWEEPER
-linha0: db '_ _ _ _ _ _ _ _ _', 13, 10, 0 ; linha vazia para tabuleiro inicial
+linha0: db '= = = = = = = = =', 13, 10, 0 ; linha vazia para tabuleiro inicial
 
 linha1 db '_ _ _ _ _ 1 3 o 2', 13, 10, 0
 linha2 db '_ _ _ _ 1 2 o o 2', 13, 10, 0
@@ -626,10 +626,6 @@ moveCursor:
 		ret
 
 mineSweeperSetup:
-	;video mode
-	;mov ah, 00h
-	;mov al, 12h
-	;int 10h
 	call clearTxt
 
 	mov cx, 9
@@ -664,6 +660,15 @@ mineSweeper:
 
 update:
 	;call delay ;muda de cor! (pq bl (parametro da cor) é alterado em delay)
+
+	;retorna o caractere do cursor
+	mov ah, 08h
+	mov bh, 00h
+	int 10h
+
+	;se a posição já foi selecionada, não faz nada
+	cmp al, '='
+	jne mineSweeper
 
 	cmp byte[posy], 0
 	je .linha1
@@ -786,12 +791,13 @@ update:
 		jmp .updateCell
 
 	.updateCell:
+
 		;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
 		mov ah, 09h
 		;mov al, byte[linhaX+bx] ;feito antes
 		mov bh, 00h
-		mov bl, 00h
-		xor cx, cx
+		mov bl, 02h
+		mov cx, 1
 		int 10h
 
 	jmp mineSweeper
