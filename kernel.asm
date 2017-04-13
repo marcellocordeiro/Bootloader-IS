@@ -16,6 +16,7 @@ nothingHere db 'nothing here, sorry', 0
 help_cmd db 'help', 0
 clear_cmd db 'clear', 0
 shutdown_cmd db 'shutdown', 0
+minesweeper_cmd db 'minesweeper', 0
 
 ;bsod
 bsod1 db 10, 10, 10, 10, '            Wh-what happened?', 13, 10, 0
@@ -29,6 +30,24 @@ bsod7 db '            ur loss, playboy!', 13, 10, 0
 ;variaveis aux
 stringColor times 8 db 0
 bgColors db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh, 01h
+
+; MINESWEEPER
+linha0: db '_ _ _ _ _ _ _ _ _', 13, 10, 0 ; linha vazia para tabuleiro inicial
+
+linha1 db '_ _ _ _ _ 1 3 ',254 ,' 2', 13, 10, 0
+linha2 db '_ _ _ _ 1 2 ',254,' ', 254,' 2', 13, 10, 0
+linha3 db '_ _ _ _ 1 ', 254, ' 3 2 1', 13, 10, 0
+linha4 db '_ _ _ _ 1 1 1 _ _', 13, 10, 0
+linha5 db '1 1 _ _ _ _ _ _ _', 13, 10, 0
+linha6 db 254, ' 3 1 1 1 1 2 1 1', 13, 10, 0
+linha7 db 254, ' 3 ', 254, ' 1 1 ', 254, ' 2 ', 254, ' 2', 13, 10, 0
+linha8 db '1 2 1 1 1 1 2 2 ', 254, 13, 10, 0
+linha9 db '_ _ _ _ _ _ _ 1 1', 13, 10, 0
+strLost db 'You Lost!', 13, 10, 0
+
+posx times 8 db 0
+posy times 8 db 0
+
 
 start:
 	xor ax, ax
@@ -46,6 +65,11 @@ start:
 	int 10h
 
 	call clearTxt
+
+	;;;;;;
+	call mineSweeper
+	jmp done
+	;;;;;;
 
 	mov si, hello
 	call printString
@@ -97,6 +121,12 @@ main:
 	call strcmp
 	jc .shutdown
 
+	;usuário digitou minesweeper?
+	mov si, minesweeper_cmd
+	mov di, command
+	call strcmp
+	jc .minesweeper
+
 	;usuário não digitou nada?
 	mov si, command
 	cmp byte[si], 0
@@ -106,6 +136,10 @@ main:
 	jmp .invalidCommand
 
 	.help:
+		mov si, minesweeper_cmd
+		call printString
+		call newLine
+
 		mov si, clear_cmd
 		call printString
 		call newLine
@@ -122,9 +156,14 @@ main:
 		jmp main
 
 	.shutdown:
-		call bsod ;;;;; call bsod_
+		call bsod
 
 		jmp done
+
+	.minesweeper:
+		call mineSweeper
+
+		jmp main
 
 	.invalidCommand:
 		mov si, invalidCommand
@@ -539,6 +578,167 @@ bsod_:
 	call delay
 
 	ret
+
+mineSweeper:
+	;video mode
+	;mov ah, 00h
+	;mov al, 12h
+	;int 10h
+
+	;text mode
+	mov ah, 00h
+	mov al, 03h
+	int 10h
+
+	mov cx, 9
+	inicio:
+		mov si, linha0
+		call printString
+	loop inicio
+
+	mov ah, 0 ; ler um char
+	int 16h
+
+	sub al, '0'
+	mov byte[posx], al
+
+	mov ah, 0 ; ler um char
+	int 16h
+
+	sub al, '0'
+	mov byte[posy], al
+
+	cmp byte[posx], 0
+	je .linha1
+
+	cmp byte[posx], 1
+	je .linha2
+
+	cmp byte[posx], 2
+	je .linha3
+
+	cmp byte[posx], 3
+	je .linha4
+
+	cmp byte[posx], 4
+	je .linha5
+
+	cmp byte[posx], 5
+	je .linha6
+
+	cmp byte[posx], 6
+	je .linha7
+
+	cmp byte[posx], 7
+	je .linha8
+
+	;cmp byte[posx], 8
+	;je .linha9
+
+	.linha1:
+		cmp byte[posy], 7 ;bomba
+		je lost
+
+		xor bx, bx
+		mov bl, byte[posy]
+		add bl, bl
+		cmp byte[linha1+bx], 254
+		call clearTxt
+
+
+		je lost
+
+	.linha2:
+		cmp byte[posy], 6 ;bomba
+		je lost
+		cmp byte[posy], 7
+		je lost
+	.linha3:
+		cmp byte[posy], 5 ;bomba
+		je lost
+	.linha4:
+		mov si, linha4
+	.linha5:
+		mov si, linha5
+	.linha6:
+		cmp byte[posy], 0
+		je lost
+	.linha7:
+		cmp byte[posy], 0
+		je lost
+		cmp byte[posy], 2
+		je lost
+		cmp byte[posy], 5
+		je lost
+		cmp byte[posy], 7
+		je lost
+	.linha8:
+		cmp byte[posy], 8
+		je lost
+
+	;mov si, linha1
+	;call printString
+
+	;mov si, linha2
+	;call printString
+
+	;mov si, linha3
+	;call printString
+
+	;mov si, linha4
+	;call printString
+
+	;mov si, linha5
+	;call printString
+
+	;mov si, linha6
+	;call printString
+
+	;mov si, linha7
+	;call printString
+
+	;mov si, linha8
+	;call printString
+
+	;mov si, linha9
+	;call printString
+
+	jmp main
+
+lost:
+	call clearTxt
+
+	;imprime todas as linhas
+	mov si, linha1
+	call printString
+
+	mov si, linha2
+	call printString
+
+	mov si, linha3
+	call printString
+
+	mov si, linha4
+	call printString
+
+	mov si, linha5
+	call printString
+
+	mov si, linha6
+	call printString
+
+	mov si, linha7
+	call printString
+
+	mov si, linha8
+	call printString
+
+	mov si, linha9
+	call printString
+
+	mov si, strLost
+	call printString
+	jmp main
 
 done:
 	jmp $
