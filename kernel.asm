@@ -43,7 +43,7 @@ linha7 db 'o 3 o 1 1 o 2 o 2', 13, 10, 0
 linha8 db '1 2 1 1 1 1 2 2 o', 13, 10, 0
 linha9 db '_ _ _ _ _ _ _ 1 1', 13, 10, 0
 
-winQnt db 5 ;teste
+winQnt db 71
 
 strLost db 'You Lost!', 13, 10, 0
 strWon db 'Congratulations! You Won', 13, 10, 0
@@ -681,6 +681,48 @@ mineSweeper:
 
 	jmp mineSweeper
 
+printMS:
+	;set cursor position
+	mov ah, 02h
+	mov bh, 00h
+	mov dh, byte[posy]
+	mov dl, byte[posx]
+	int 10h
+
+	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
+
+	cmp al, 13 ;acabou a string?
+	je .done ;se cmp for verdadeiro (verifica no registrador de flags)
+
+	cmp al, 'o' ;se for bomba, imprime vermelho
+	je .red
+
+	mov bl, 02h ;se não, imprime verde
+	jmp .continue
+
+	.red:
+		mov bl, 04h
+		jmp .continue
+
+	.continue:
+		;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
+		mov ah, 09h
+		mov bh, 00h
+		mov cx, 1
+		int 10h
+
+		inc byte[posx]
+
+		jmp printMS
+
+	.done:
+		inc byte[posy]
+		mov byte[posx], 0
+
+		call newLine
+
+		ret
+
 update:
 	;retorna o caractere do cursor
 	mov ah, 08h
@@ -842,33 +884,45 @@ update:
 gameOver:
 	call clearTxt
 
+	mov byte[posx], 0
+	mov byte[posy], 0
+
 	;imprime todas as linhas
 	mov si, linha1
-	call printString
+	;call printString
+	call printMS
 
 	mov si, linha2
-	call printString
+	;call printString
+	call printMS
 
 	mov si, linha3
-	call printString
+	;call printString
+	call printMS
 
 	mov si, linha4
-	call printString
+	;call printString
+	call printMS
 
 	mov si, linha5
-	call printString
+	;call printString
+	call printMS
 
 	mov si, linha6
-	call printString
+	;call printString
+	call printMS
 
 	mov si, linha7
-	call printString
+	;call printString
+	call printMS
 
 	mov si, linha8
-	call printString
+	;call printString
+	call printMS
 
 	mov si, linha9
-	call printString
+	;call printString
+	call printMS
 
 	call newLine ;\n
 
