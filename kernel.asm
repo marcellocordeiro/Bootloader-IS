@@ -679,6 +679,20 @@ mineSweeper:
 	cmp al, 0dh
 	je update
 
+	cmp al, 32
+	je flagCell
+
+	jmp mineSweeper
+
+flagCell:
+	;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
+	mov ah, 09h
+	mov al, '!'
+	mov bh, 00h
+	mov bl, 04h
+	mov cx, 1
+	int 10h
+
 	jmp mineSweeper
 
 printMS:
