@@ -586,6 +586,9 @@ moveCursor:
 	;ah = 02h, bh = page number, dh = row, dl = column
 
 	.up:
+		cmp dh, 0 ;já estava na primeira linha?
+		je mineSweeper
+
 		mov ah, 02h
 		xor bx, bx
 		dec dh
@@ -596,6 +599,9 @@ moveCursor:
 		ret
 
 	.down:
+		cmp dh, 8 ;já estava na última linha?
+		je mineSweeper
+
 		mov ah, 02h
 		xor bx, bx
 		inc dh
@@ -606,9 +612,11 @@ moveCursor:
 		ret
 
 	.left:
+		cmp dl, 0 ;já estava na primeira coluna?
+		je mineSweeper
+		
 		mov ah, 02h
 		xor bx, bx
-		;dec dl
 		sub dl, 2
 		int 10h
 
@@ -617,9 +625,11 @@ moveCursor:
 		ret
 
 	.right:
+		cmp dl, 16 ;já estava na última coluna?
+		je mineSweeper
+
 		mov ah, 02h
 		xor bx, bx
-		;inc dl
 		add dl, 2
 		int 10h
 		
