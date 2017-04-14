@@ -25,17 +25,17 @@ mydisk:
 	clear
 
 boot1:
-	@echo "- boot1"
+	@echo "== boot1 =="
 	nasm $(ASMFLAGS) $(boot1).asm -o $(boot1).bin
 	@echo "\n"
 
 boot2:
-	@echo "- boot2"
+	@echo "== boot2 =="
 	nasm $(ASMFLAGS) $(boot2).asm -o $(boot2).bin
 	@echo "\n"
 
 kernel:
-	@echo "- kernel"
+	@echo "== kernel =="
 	nasm $(ASMFLAGS) $(kernel).asm -o $(kernel).bin
 	@echo "\n"
 

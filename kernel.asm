@@ -33,7 +33,6 @@ bgColors db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh
 
 ; MINESWEEPER
 linha0: db '= = = = = = = = =', 13, 10, 0 ; linha vazia para tabuleiro inicial
-
 linha1 db '_ _ _ _ _ 1 3 o 2', 13, 10, 0
 linha2 db '_ _ _ _ 1 2 o o 2', 13, 10, 0
 linha3 db '_ _ _ _ 1 o 3 2 1', 13, 10, 0
@@ -43,10 +42,13 @@ linha6 db 'o 3 1 1 1 1 2 1 1', 13, 10, 0
 linha7 db 'o 3 o 1 1 o 2 o 2', 13, 10, 0
 linha8 db '1 2 1 1 1 1 2 2 o', 13, 10, 0
 linha9 db '_ _ _ _ _ _ _ 1 1', 13, 10, 0
+
+winQnt db 5 ;teste
+
 strLost db 'You Lost!', 13, 10, 0
 strWon db 'Congratulations! You Won', 13, 10, 0
 
-uncovered times 8 db 0 ;uncovered == 71 --> win!
+uncovered times 8 db 0 ;uncovered == winQnt --> win!
 
 posx times 8 db 0
 posy times 8 db 0
@@ -663,11 +665,12 @@ mineSweeperSetup:
 	jmp mineSweeper
 
 mineSweeper:
+	mov bl, byte[winQnt]
+	cmp byte[uncovered], bl
+	je won
+
 	mov ah, 00h
 	int 16h
-
-	cmp byte[uncovered], 71
-	je won
 
 	mov dl, byte[posx]
 	mov dh, byte[posy]
@@ -687,8 +690,6 @@ update:
 	;se a posição já foi selecionada, não faz nada
 	cmp al, '='
 	jne mineSweeper
-
-	inc byte[uncovered] ;se for uma nova posição, incrementa o contador
 
 	cmp byte[posy], 0
 	je .linha1
@@ -833,6 +834,8 @@ update:
 		mov bl, 02h
 		mov cx, 1
 		int 10h
+
+		inc byte[uncovered] ;se for uma nova posição, incrementa o contador
 
 	jmp mineSweeper
 
