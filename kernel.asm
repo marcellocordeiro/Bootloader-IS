@@ -608,7 +608,8 @@ moveCursor:
 	.left:
 		mov ah, 02h
 		xor bx, bx
-		dec dl
+		;dec dl
+		sub dl, 2
 		int 10h
 
 		mov byte[posx], dl
@@ -618,7 +619,8 @@ moveCursor:
 	.right:
 		mov ah, 02h
 		xor bx, bx
-		inc dl
+		;inc dl
+		add dl, 2
 		int 10h
 		
 		mov byte[posx], dl
@@ -804,6 +806,7 @@ update:
 
 lost:
 	call clearTxt
+
 	;imprime todas as linhas
 	mov si, linha1
 	call printString
