@@ -44,6 +44,9 @@ linha7 db 'o 3 o 1 1 o 2 o 2', 13, 10, 0
 linha8 db '1 2 1 1 1 1 2 2 o', 13, 10, 0
 linha9 db '_ _ _ _ _ _ _ 1 1', 13, 10, 0
 strLost db 'You Lost!', 13, 10, 0
+strWon db 'Congratulations! You Won', 13, 10, 0
+
+uncovered times 8 db 0 ;uncovered == 71 --> win!
 
 posx times 8 db 0
 posy times 8 db 0
@@ -640,6 +643,8 @@ moveCursor:
 mineSweeperSetup:
 	call clearTxt
 
+	mov byte[uncovered], 0
+
 	mov cx, 9
 	inicio:
 		mov si, linha0
@@ -661,6 +666,9 @@ mineSweeper:
 	mov ah, 00h
 	int 16h
 
+	cmp byte[uncovered], 71
+	je won
+
 	mov dl, byte[posx]
 	mov dh, byte[posy]
 	call moveCursor
@@ -671,8 +679,6 @@ mineSweeper:
 	jmp mineSweeper
 
 update:
-	;call delay ;muda de cor! (pq bl (parametro da cor) é alterado em delay)
-
 	;retorna o caractere do cursor
 	mov ah, 08h
 	mov bh, 00h
@@ -681,6 +687,8 @@ update:
 	;se a posição já foi selecionada, não faz nada
 	cmp al, '='
 	jne mineSweeper
+
+	inc byte[uncovered] ;se for uma nova posição, incrementa o contador
 
 	cmp byte[posy], 0
 	je .linha1
@@ -705,6 +713,9 @@ update:
 
 	cmp byte[posy], 7
 	je .linha8
+
+	cmp byte[posy], 8
+	je .linha9
 
 	.linha1:
 		xor bx, bx
@@ -802,8 +813,19 @@ update:
 
 		jmp .updateCell
 
-	.updateCell:
+	.linha9:
+		xor bx, bx
+		mov bl, byte[posx]
+		;add bl, bl
+		
+		cmp byte[linha9+bx], 'o'
+		je lost
 
+		mov al, byte[linha9+bx]
+
+		jmp .updateCell
+
+	.updateCell:
 		;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
 		mov ah, 09h
 		;mov al, byte[linhaX+bx] ;feito antes
@@ -814,7 +836,7 @@ update:
 
 	jmp mineSweeper
 
-lost:
+gameOver:
 	call clearTxt
 
 	;imprime todas as linhas
@@ -846,6 +868,28 @@ lost:
 	call printString
 
 	call newLine ;\n
+
+	ret
+
+won:
+	call gameOver
+
+	;imprmie msg
+	mov si, strWon
+	call printString
+	call newLine ;\n
+
+	;volta pro terminal
+	mov si, pressAny
+	call printString
+
+	mov ah, 0	;espera ocupada
+	int 16h
+
+	jmp main
+
+lost:
+	call gameOver
 
 	;imprmie msg
 	mov si, strLost
