@@ -33,15 +33,17 @@ bgColors db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh
 
 ;minesweeper
 linha0: db '= = = = = = = = =', 13, 10, 0 ; linha vazia para tabuleiro inicial
-linha1 db '_ _ _ _ _ 1 3 o 2', 13, 10, 0
-linha2 db '_ _ _ _ 1 2 o o 2', 13, 10, 0
-linha3 db '_ _ _ _ 1 o 3 2 1', 13, 10, 0
-linha4 db '_ _ _ _ 1 1 1 _ _', 13, 10, 0
-linha5 db '1 1 _ _ _ _ _ _ _', 13, 10, 0
-linha6 db 'o 3 1 1 1 1 2 1 1', 13, 10, 0
-linha7 db 'o 3 o 1 1 o 2 o 2', 13, 10, 0
-linha8 db '1 2 1 1 1 1 2 2 o', 13, 10, 0
-linha9 db '_ _ _ _ _ _ _ 1 1', 13, 10, 0
+linha1 db '_ _ _ _ _ 1 3 o 2', 0
+linha2 db '_ _ _ _ 1 2 o o 2', 0
+linha3 db '_ _ _ _ 1 o 3 2 1', 0
+linha4 db '_ _ _ _ 1 1 1 _ _', 0
+linha5 db '1 1 _ _ _ _ _ _ _', 0
+linha6 db 'o 3 1 1 1 1 2 1 1', 0
+linha7 db 'o 3 o 1 1 o 2 o 2', 0
+linha8 db '1 2 1 1 1 1 2 2 o', 0
+linha9 db '_ _ _ _ _ _ _ 1 1', 0
+qntCol db 17
+qntRow db 9
 
 winQnt db 71
 
@@ -522,57 +524,6 @@ bsod:
 
 	ret
 
-bsod_:
-	;video mode
-	mov ah, 00h
-	mov al, 12h
-	int 10h
-
-	;background
-	mov ah, 0bh
-	mov bh, 00h
-	mov bl, 01h
-	int 10h
-
-	;imprime strings (invadido)
-	mov bl, 0fh ;parametro printString_Delay (cor)
-
-	mov si, bsod1
-	call printString_Delay
-	call delay
-
-	mov si, bsod2
-	call printString_Delay
-	call delay
-
-	mov si, bsod3
-	call printString_Delay
-	call delay
-
-	mov si, bsod4
-	call printString_Delay
-	call delay
-
-	;pisca colorido
-	call blink
-
-	;imprime strings (invasor)
-	mov bl, 0eh ;parametro printString_Delay (cor)
-
-	mov si, bsod5
-	call printString_Delay
-	call delay
-
-	mov si, bsod6
-	call printString_Delay
-	call delay
-
-	mov si, bsod7
-	call printString_Delay
-	call delay
-
-	ret
-
 moveCursor:
 	cmp ah, 48h ;up arrow?
 	je .up
@@ -725,151 +676,32 @@ update:
 	cmp al, '='
 	jne mineSweeper
 
-	cmp byte[posy], 0
-	je .linha1
+	xor bx, bx
+	xor cx, cx
 
-	cmp byte[posy], 1
-	je .linha2
+	;avança para a linha escolhida
+	mov cl, byte[posy]
+	.gotoRow:
+		add bl, byte[qntCol] ;quantidade de elementos na linha
+		add bl, 1 ;terminador da string
+	loop .gotoRow
 
-	cmp byte[posy], 2
-	je .linha3
+	;posição do elemento escolhido
+	add bl, byte[posx]
+	
+	;bomba
+	cmp byte[linha1+bx], 'o'
+	je lost
 
-	cmp byte[posy], 3
-	je .linha4
+	;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
+	mov ah, 09h
+	mov al, byte[linha1+bx]
+	mov bh, 00h
+	mov bl, 02h
+	mov cx, 1
+	int 10h
 
-	cmp byte[posy], 4
-	je .linha5
-
-	cmp byte[posy], 5
-	je .linha6
-
-	cmp byte[posy], 6
-	je .linha7
-
-	cmp byte[posy], 7
-	je .linha8
-
-	cmp byte[posy], 8
-	je .linha9
-
-	.linha1:
-		xor bx, bx
-		mov bl, byte[posx]
-		;add bl, bl
-		
-		cmp byte[linha1+bx], 'o'
-		je lost
-
-		mov al, byte[linha1+bx]
-
-		jmp .updateCell
-
-	.linha2:
-		xor bx, bx
-		mov bl, byte[posx]
-		;add bl, bl
-		
-		cmp byte[linha2+bx], 'o'
-		je lost
-
-		mov al, byte[linha2+bx]
-
-		jmp .updateCell
-
-	.linha3:
-		xor bx, bx
-		mov bl, byte[posx]
-		;add bl, bl
-		
-		cmp byte[linha3+bx], 'o'
-		je lost
-
-		mov al, byte[linha3+bx]
-
-		jmp .updateCell
-
-	.linha4:
-		xor bx, bx
-		mov bl, byte[posx]
-		;add bl, bl
-		
-		cmp byte[linha4+bx], 'o'
-		je lost
-
-		mov al, byte[linha4+bx]
-
-		jmp .updateCell
-
-	.linha5:
-		xor bx, bx
-		mov bl, byte[posx]
-		;add bl, bl
-		
-		cmp byte[linha5+bx], 'o'
-		je lost
-
-		mov al, byte[linha5+bx]
-
-		jmp .updateCell
-
-	.linha6:
-		xor bx, bx
-		mov bl, byte[posx]
-		;add bl, bl
-		
-		cmp byte[linha6+bx], 'o'
-		je lost
-
-		mov al, byte[linha6+bx]
-
-		jmp .updateCell
-
-	.linha7:
-		xor bx, bx
-		mov bl, byte[posx]
-		;add bl, bl
-		
-		cmp byte[linha7+bx], 'o'
-		je lost
-
-		mov al, byte[linha7+bx]
-
-		jmp .updateCell
-
-	.linha8:
-		xor bx, bx
-		mov bl, byte[posx]
-		;add bl, bl
-		
-		cmp byte[linha8+bx], 'o'
-		je lost
-
-		mov al, byte[linha8+bx]
-
-		jmp .updateCell
-
-	.linha9:
-		xor bx, bx
-		mov bl, byte[posx]
-		;add bl, bl
-		
-		cmp byte[linha9+bx], 'o'
-		je lost
-
-		mov al, byte[linha9+bx]
-
-		jmp .updateCell
-
-	.updateCell:
-		;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
-		mov ah, 09h
-		;mov al, byte[linhaX+bx] ;feito antes
-		mov bh, 00h
-		mov bl, 02h
-		mov cx, 1
-		int 10h
-
-		inc byte[uncovered] ;se for uma nova posição, incrementa o contador
+	inc byte[uncovered] ;se for uma nova posição, incrementa o contador
 
 	jmp mineSweeper
 
@@ -895,7 +727,7 @@ printAll:
 
 	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
 
-	cmp al, 13 ;acabou a string?
+	cmp al, 0 ;acabou a string?
 	je .done ;se cmp for verdadeiro (verifica no registrador de flags)
 
 	cmp al, 'o' ;se for bomba, imprime vermelho
@@ -922,9 +754,6 @@ printAll:
 	.done:
 		inc byte[posy]
 		mov byte[posx], 0
-
-		inc si
-		inc si
 
 		cmp byte[posy], 9
 		je .reallyDone
