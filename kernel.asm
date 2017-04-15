@@ -31,7 +31,7 @@ bsod7 db '            ur loss, playboy!', 13, 10, 0
 stringColor times 8 db 0
 bgColors db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh, 01h
 
-; MINESWEEPER
+;minesweeper
 linha0: db '= = = = = = = = =', 13, 10, 0 ; linha vazia para tabuleiro inicial
 linha1 db '_ _ _ _ _ 1 3 o 2', 13, 10, 0
 linha2 db '_ _ _ _ 1 2 o o 2', 13, 10, 0
@@ -307,7 +307,7 @@ readStr:
 
 printChar:
 	mov ah, 0eh ;imprime o caractere de al
-	mov bl, 03h ;cor do caractere (modo grafico)	;usado no mineSweeper
+	mov bl, 03h ;cor do caractere (modo grafico)
 	int 10h
 
 	ret
@@ -320,7 +320,7 @@ printString:
 
 	mov ah, 0eh ;imprime o caractere de al
 	mov bh, 00h
-	mov bl, 03h ;cor do caractere (modo grafico)	;usado no mineSweeper
+	mov bl, 03h ;cor do caractere (modo grafico)
 	int 10h
 
 	jmp printString
@@ -586,13 +586,13 @@ moveCursor:
 	cmp ah, 4dh ;right arrow?
 	je .right
 
-	ret
+	jmp .done
 
 	;ah = 02h, bh = page number, dh = row, dl = column
 
 	.up:
 		cmp dh, 0 ;já estava na primeira linha?
-		je mineSweeper
+		je .done
 
 		mov ah, 02h
 		xor bx, bx
@@ -605,7 +605,7 @@ moveCursor:
 
 	.down:
 		cmp dh, 8 ;já estava na última linha?
-		je mineSweeper
+		je .done
 
 		mov ah, 02h
 		xor bx, bx
@@ -618,7 +618,7 @@ moveCursor:
 
 	.left:
 		cmp dl, 0 ;já estava na primeira coluna?
-		je mineSweeper
+		je .done
 		
 		mov ah, 02h
 		xor bx, bx
@@ -631,7 +631,7 @@ moveCursor:
 
 	.right:
 		cmp dl, 16 ;já estava na última coluna?
-		je mineSweeper
+		je .done
 
 		mov ah, 02h
 		xor bx, bx
@@ -640,6 +640,9 @@ moveCursor:
 		
 		mov byte[posx], dl
 
+		ret
+
+	.done:
 		ret
 
 mineSweeperSetup:
@@ -685,6 +688,13 @@ mineSweeper:
 	jmp mineSweeper
 
 flagCell:
+	mov ah, 08h
+	mov bh, 00h
+	int 10h
+
+	cmp al, '!'
+	je .removeFlag
+
 	;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
 	mov ah, 09h
 	mov al, '!'
@@ -695,47 +705,15 @@ flagCell:
 
 	jmp mineSweeper
 
-printMS:
-	;set cursor position
-	mov ah, 02h
-	mov bh, 00h
-	mov dh, byte[posy]
-	mov dl, byte[posx]
-	int 10h
-
-	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
-
-	cmp al, 13 ;acabou a string?
-	je .done ;se cmp for verdadeiro (verifica no registrador de flags)
-
-	cmp al, 'o' ;se for bomba, imprime vermelho
-	je .red
-
-	mov bl, 02h ;se não, imprime verde
-	jmp .continue
-
-	.red:
-		mov bl, 04h
-		jmp .continue
-
-	.continue:
-		;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
+	.removeFlag:
 		mov ah, 09h
+		mov al, '='
 		mov bh, 00h
+		mov bl, 07h
 		mov cx, 1
 		int 10h
 
-		inc byte[posx]
-
-		jmp printMS
-
-	.done:
-		inc byte[posy]
-		mov byte[posx], 0
-
-		call newLine
-
-		ret
+		jmp mineSweeper
 
 update:
 	;retorna o caractere do cursor
@@ -894,6 +872,48 @@ update:
 		inc byte[uncovered] ;se for uma nova posição, incrementa o contador
 
 	jmp mineSweeper
+
+printMS:
+	;set cursor position
+	mov ah, 02h
+	mov bh, 00h
+	mov dh, byte[posy]
+	mov dl, byte[posx]
+	int 10h
+
+	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
+
+	cmp al, 13 ;acabou a string?
+	je .done ;se cmp for verdadeiro (verifica no registrador de flags)
+
+	cmp al, 'o' ;se for bomba, imprime vermelho
+	je .red
+
+	mov bl, 02h ;se não, imprime verde
+	jmp .continue
+
+	.red:
+		mov bl, 04h
+		jmp .continue
+
+	.continue:
+		;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
+		mov ah, 09h
+		mov bh, 00h
+		mov cx, 1
+		int 10h
+
+		inc byte[posx]
+
+		jmp printMS
+
+	.done:
+		inc byte[posy]
+		mov byte[posx], 0
+
+		call newLine
+
+		ret
 
 gameOver:
 	call clearTxt
