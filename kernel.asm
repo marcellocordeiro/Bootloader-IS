@@ -921,46 +921,108 @@ gameOver:
 	mov byte[posx], 0
 	mov byte[posy], 0
 
+	call printAll
+	ret
+
 	;imprime todas as linhas
 	mov si, linha1
 	;call printString
 	call printMS
 
-	mov si, linha2
+	inc si
+	inc si
+
+	;mov si, linha2
 	;call printString
 	call printMS
 
-	mov si, linha3
+	;mov si, linha3
 	;call printString
 	call printMS
 
-	mov si, linha4
+	;mov si, linha4
 	;call printString
 	call printMS
 
-	mov si, linha5
+	;mov si, linha5
 	;call printString
 	call printMS
 
-	mov si, linha6
+	;mov si, linha6
 	;call printString
 	call printMS
 
-	mov si, linha7
+	;mov si, linha7
 	;call printString
 	call printMS
 
-	mov si, linha8
+	;mov si, linha8
 	;call printString
 	call printMS
 
-	mov si, linha9
+	;mov si, linha9
 	;call printString
 	call printMS
 
 	call newLine ;\n
 
 	ret
+
+printAll:
+	;set cursor position
+	mov ah, 02h
+	mov bh, 00h
+	mov dh, byte[posy]
+	mov dl, byte[posx]
+	int 10h
+
+	lodsb ;carrega um caractere e passa o ponteiro para o proximo / Carrega um byte de DS:SI em AL e depois incrementa SI 
+
+	cmp al, 13 ;acabou a string?
+	je .done ;se cmp for verdadeiro (verifica no registrador de flags)
+
+	cmp al, 'o' ;se for bomba, imprime vermelho
+	je .red
+
+	mov bl, 02h ;se não, imprime verde
+	jmp .continue
+
+	.red:
+		mov bl, 04h
+		jmp .continue
+
+	.continue:
+		;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
+		mov ah, 09h
+		mov bh, 00h
+		mov cx, 1
+		int 10h
+
+		inc byte[posx]
+
+		jmp printAll
+
+	.done:
+		inc byte[posy]
+		mov byte[posx], 0
+
+		inc si
+		inc si
+
+		cmp byte[posy], 9
+		je .reallyDone
+
+		call newLine
+
+		jmp printAll
+
+	.reallyDone:
+		inc byte[posy]
+		mov byte[posx], 0
+
+		call newLine
+
+		ret
 
 won:
 	call gameOver
