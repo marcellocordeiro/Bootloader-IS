@@ -555,8 +555,12 @@ moveCursor:
 		ret
 
 	.down:
-		cmp dh, 8 ;já estava na última linha?
+		inc dh
+
+		cmp dh, byte[qntRow] ;já estava na última linha?
 		je .done
+
+		dec dh
 
 		mov ah, 02h
 		xor bx, bx
@@ -581,8 +585,12 @@ moveCursor:
 		ret
 
 	.right:
-		cmp dl, 16 ;já estava na última coluna?
+		inc dl
+
+		cmp dl, byte[qntCol] ;já estava na última coluna?
 		je .done
+
+		dec dl
 
 		mov ah, 02h
 		xor bx, bx
@@ -601,7 +609,7 @@ mineSweeperSetup:
 
 	mov byte[uncovered], 0
 
-	mov cx, 9
+	mov cx, 9 ;encontrar um jeito de fazer isso em função de uma "variável" !!!!!!
 	inicio:
 		mov si, linha0
 		call printString
@@ -615,6 +623,16 @@ mineSweeperSetup:
 
 	mov byte[posx], 0
 	mov byte[posy], 0
+
+	;ESCOLHA DO JOGO!! (fazer) !!!!!!!!!!!!!!!
+	;cmp 0, 1, 2, 3.... , jogoescolhido
+	;je jogoX
+
+	;jogoX:
+	mov si, linha1 ;jogo1 (?)
+	;mov byte[qntRow], qntRow do jogo 1
+	;mov byte[qntCol], qntCol do jogo 1
+	;mov byte[winQnt], winQnt do jogo 1
 
 	jmp mineSweeper
 
@@ -690,12 +708,12 @@ update:
 	add bl, byte[posx]
 	
 	;bomba
-	cmp byte[linha1+bx], 'o'
+	cmp byte[si+bx], 'o'
 	je lost
 
 	;ah = 09h, al = character, bh = page number, bl = color, cx = Number of times to print character
 	mov ah, 09h
-	mov al, byte[linha1+bx]
+	mov al, byte[si+bx]
 	mov bh, 00h
 	mov bl, 02h
 	mov cx, 1
