@@ -33,19 +33,23 @@ bgColors db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh
 
 ;minesweeper
 linha0: db '= = = = = = = = =', 13, 10, 0 ; linha vazia para tabuleiro inicial
-linha1 db '_ _ _ _ _ 1 3 o 2', 0
-linha2 db '_ _ _ _ 1 2 o o 2', 0
-linha3 db '_ _ _ _ 1 o 3 2 1', 0
-linha4 db '_ _ _ _ 1 1 1 _ _', 0
-linha5 db '1 1 _ _ _ _ _ _ _', 0
-linha6 db 'o 3 1 1 1 1 2 1 1', 0
-linha7 db 'o 3 o 1 1 o 2 o 2', 0
-linha8 db '1 2 1 1 1 1 2 2 o', 0
-linha9 db '_ _ _ _ _ _ _ 1 1', 0
-qntCol db 17
-qntRow db 9
 
-winQnt db 71
+game1_1 db '_ _ _ _ _ 1 3 o 2', 0
+game1_2 db '_ _ _ _ 1 2 o o 2', 0
+game1_3 db '_ _ _ _ 1 o 3 2 1', 0
+game1_4 db '_ _ _ _ 1 1 1 _ _', 0
+game1_5 db '1 1 _ _ _ _ _ _ _', 0
+game1_6 db 'o 3 1 1 1 1 2 1 1', 0
+game1_7 db 'o 3 o 1 1 o 2 o 2', 0
+game1_8 db '1 2 1 1 1 1 2 2 o', 0
+game1_9 db '_ _ _ _ _ _ _ 1 1', 0
+game1_colQnt db 17
+game1_rowQnt db 9
+game1_winQnt db 71
+
+colQnt db 0
+rowQnt db 0
+winQnt db 0
 
 strLost db 'You Lost!', 13, 10, 0
 strWon db 'Congratulations! You Won', 13, 10, 0
@@ -557,7 +561,7 @@ moveCursor:
 	.down:
 		inc dh
 
-		cmp dh, byte[qntRow] ;já estava na última linha?
+		cmp dh, byte[rowQnt] ;já estava na última linha?
 		je .done
 
 		dec dh
@@ -587,7 +591,7 @@ moveCursor:
 	.right:
 		inc dl
 
-		cmp dl, byte[qntCol] ;já estava na última coluna?
+		cmp dl, byte[colQnt] ;já estava na última coluna?
 		je .done
 
 		dec dl
@@ -607,34 +611,46 @@ moveCursor:
 mineSweeperSetup:
 	call clearTxt
 
-	mov byte[uncovered], 0
-
-	mov cx, 9 ;encontrar um jeito de fazer isso em função de uma "variável" !!!!!!
-	inicio:
-		mov si, linha0
-		call printString
-	loop inicio
-
-	;coloca o cursor no início da tela
-	mov ah, 02h
-	xor bx, bx
-	xor dx, dx
-	int 10h
-
-	mov byte[posx], 0
-	mov byte[posy], 0
-
 	;ESCOLHA DO JOGO!! (fazer) !!!!!!!!!!!!!!!
 	;cmp 0, 1, 2, 3.... , jogoescolhido
 	;je jogoX
 
 	;jogoX:
-	mov si, linha1 ;jogo1 (?)
-	;mov byte[qntRow], qntRow do jogo 1
-	;mov byte[qntCol], qntCol do jogo 1
-	;mov byte[winQnt], winQnt do jogo 1
+		mov di, game1_1 ;jogo1 (?)
 
-	jmp mineSweeper
+		mov bl, byte[game1_rowQnt]
+		mov byte[rowQnt], bl
+
+		mov bl, byte[game1_colQnt]
+		mov byte[colQnt], bl
+
+		mov bl, byte[game1_winQnt]
+		mov byte[winQnt], bl
+
+		jmp .done
+
+	.done:
+		mov byte[uncovered], 0
+
+		mov byte[posx], 0
+		mov byte[posy], 0
+
+		mov cx, 0
+		mov cl, byte[rowQnt] ;encontrar um jeito de fazer isso em função de uma "variável" !!!!!!
+		inicio:
+			mov si, linha0
+			call printString
+		loop inicio
+
+		;coloca o cursor no início da tela
+		mov ah, 02h
+		xor bx, bx
+		xor dx, dx
+		int 10h
+
+		mov si, di
+
+		jmp mineSweeper
 
 mineSweeper:
 	mov bl, byte[winQnt]
@@ -700,7 +716,7 @@ update:
 	;avança para a linha escolhida
 	mov cl, byte[posy]
 	.gotoRow:
-		add bl, byte[qntCol] ;quantidade de elementos na linha
+		add bl, byte[colQnt] ;quantidade de elementos na linha
 		add bl, 1 ;terminador da string
 	loop .gotoRow
 
@@ -773,7 +789,8 @@ printAll:
 		inc byte[posy]
 		mov byte[posx], 0
 
-		cmp byte[posy], 9
+		mov bl, byte[rowQnt]
+		cmp byte[posy], bl
 		je .reallyDone
 
 		call newLine
