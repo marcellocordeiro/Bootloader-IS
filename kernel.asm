@@ -96,19 +96,6 @@ game4_colQnt db 31
 game4_rowQnt db 16
 game4_winQnt db 216
 
-game5_1 db '_ _ _ _ _ _ _ _ _', 0
-game5_2 db '_ _ _ _ _ _ _ _ _', 0
-game5_3 db '_ _ _ _ _ _ _ _ _', 0
-game5_4 db '_ _ _ _ _ _ _ _ _', 0
-game5_5 db '_ _ _ _ _ _ _ _ _', 0
-game5_6 db '_ _ _ _ _ _ _ _ _', 0
-game5_7 db '_ _ _ _ _ _ _ _ _', 0
-game5_8 db '_ _ _ _ _ _ _ _ _', 0
-game5_9 db '_ _ _ _ _ _ _ _ _', 0
-game5_colQnt db 0
-game5_rowQnt db 0
-game5_winQnt db 0
-
 colQnt db 0
 rowQnt db 0
 winQnt db 0
@@ -837,7 +824,7 @@ flagCell:
 	mov ah, 09h
 	mov al, '!'
 	mov bh, 00h
-	mov bl, 1eh
+	mov bl, 14h
 	mov cx, 1
 	int 10h
 
@@ -864,17 +851,19 @@ update:
 	jne mineSweeper
 
 	xor bx, bx
+	xor dx, dx
 	xor cx, cx
-
+	mov dl, byte[colQnt]
 	;avança para a linha escolhida
 	mov cl, byte[posy]
 	.gotoRow:
-		add bl, byte[colQnt] ;quantidade de elementos na linha
-		add bl, 1 ;terminador da string
+		add bx, dx ;quantidade de elementos na linha
+		add bx, 1 ;terminador da string
 	loop .gotoRow
 
+	mov dl, byte[posx]
 	;posição do elemento escolhido
-	add bl, byte[posx]
+	add bx, dx
 	
 	;bomba
 	cmp byte[si+bx], 'o'
