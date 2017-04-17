@@ -762,19 +762,14 @@ mineSweeperSetup:
 
 		jmp .done
 
-
 	.done:
 		mov byte[uncovered], 0
 
 		mov byte[posx], 0
 		mov byte[posy], 0
 
-		mov cx, 0
-		mov cl, byte[rowQnt] ;encontrar um jeito de fazer isso em função de uma "variável" !!!!!!
-		inicio:
-			mov si, linha0
-			call printString
-		loop inicio
+		xor cx, cx
+		call printEmpty
 
 		;coloca o cursor no início da tela
 		mov ah, 02h
@@ -785,6 +780,30 @@ mineSweeperSetup:
 		mov si, di
 
 		jmp mineSweeper
+
+printEmpty:
+	mov cl, 0
+
+	.printCol:
+		mov al, '='
+		call printChar
+
+		mov al, ' '
+		call printChar
+
+		add cl, 2
+
+		cmp cl, byte[colQnt]
+		jng .printCol
+
+	add ch, 1
+
+	call newLine
+
+	cmp ch, byte[rowQnt]
+	jne printEmpty
+
+	ret
 
 mineSweeper:
 	mov bl, byte[winQnt]
@@ -818,7 +837,7 @@ flagCell:
 	mov ah, 09h
 	mov al, '!'
 	mov bh, 00h
-	mov bl, 04h
+	mov bl, 1eh
 	mov cx, 1
 	int 10h
 
@@ -828,7 +847,7 @@ flagCell:
 		mov ah, 09h
 		mov al, '='
 		mov bh, 00h
-		mov bl, 07h
+		mov bl, 1eh
 		mov cx, 1
 		int 10h
 
