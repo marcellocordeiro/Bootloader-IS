@@ -71,12 +71,15 @@ start:
 	mov al, 03h
 	int 10h
 
+
+	call welcomeScreen
+	call delay
 	;blinking cursor: full block
 	mov ah, 01h
 	mov cx, 07h
 	int 10h
 
-	call clearTxt
+	;call clearTxt
 
 	mov si, hello
 	call printString
@@ -155,6 +158,8 @@ main:
 		call printString
 		call newLine
 
+		call newLine
+
 		jmp main
 
 	.clear:
@@ -179,7 +184,7 @@ main:
 		jmp main
 
 clearTxt:
-	mov bh, 07h ;00h = modo de vídeo, 07h = modo de texto  ; character attribute = white on black
+	mov bh, 1eh ;00h = modo de vídeo, 07h = modo de texto  ; character attribute = white on black
 	jmp clear
 
 clearVideo:
@@ -187,7 +192,7 @@ clearVideo:
 	jmp clear
 
 clear:
-	mov ah, 07h ;scroll down
+	mov ah, 06h ;scroll down
 	mov al, 00h ;scroll the whole window
 
 	;upper left corner
@@ -197,6 +202,7 @@ clear:
 	;lower right corner
 	mov dh, 1fh ;row = 24 (0x18)
 	mov dl, 4fh ;col = 79 (0x4f)
+
 	int 10h ;call BIOS video interrupt
 
 	;set cursor to the beginning
@@ -501,7 +507,7 @@ bsod:
 	call printString_Delay_C
 
 	;pisca colorido
-	call blink
+	;call blink
 
 	;imprime strings (invasor)
 	mov byte[stringColor], 0eh ;parametro printString_Delay_C (cor)
@@ -731,7 +737,7 @@ update:
 	mov ah, 09h
 	mov al, byte[si+bx]
 	mov bh, 00h
-	mov bl, 02h
+	mov bl, 1eh
 	mov cx, 1
 	int 10h
 
@@ -767,11 +773,11 @@ printAll:
 	cmp al, 'o' ;se for bomba, imprime vermelho
 	je .red
 
-	mov bl, 02h ;se não, imprime verde
+	mov bl, 1eh ;se não, imprime verde
 	jmp .continue
 
 	.red:
-		mov bl, 04h
+		mov bl, 14h
 		jmp .continue
 
 	.continue:
@@ -838,6 +844,31 @@ lost:
 	int 16h
 
 	jmp main
+
+welcomeScreen:
+	call clearTxt
+
+	;posiciona o cursor
+	mov ah, 02h
+	xor bx, bx
+	mov dh, 7
+	mov dl, 15
+	int 10h
+
+	mov si, welcome
+	mov byte[stringColor], 0fh
+	call printString_Delay
+
+	;\n \n
+	mov ah, 02h
+	xor bx, bx
+	mov dh, 9
+	mov dl, 15
+	int 10h
+
+	ret
+
+welcome db 'Welcome!', 0
 
 done:
 	jmp $
