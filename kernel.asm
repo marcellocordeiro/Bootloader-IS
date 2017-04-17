@@ -64,22 +64,55 @@ game2_colQnt db 17
 game2_rowQnt db 13
 game2_winQnt db 99
 
-game3_1 db '_ _ _ _ _ _ _ _ _', 0
-game3_2 db '_ _ _ _ _ _ _ _ _', 0
-game3_3 db '_ _ _ _ _ _ _ _ _', 0
-game3_4 db '_ _ _ _ _ _ _ _ _', 0
-game3_5 db '_ _ _ _ _ _ _ _ _', 0
-game3_6 db '_ _ _ _ _ _ _ _ _', 0
-game3_7 db '_ _ _ _ _ _ _ _ _', 0
-game3_8 db '_ _ _ _ _ _ _ _ _', 0
-game3_9 db '_ _ _ _ _ _ _ _ _', 0
-game3_colQnt db 0
-game3_rowQnt db 0
-game3_winQnt db 0
+game3_1 db '_ 1 o 1 _ _ _ _', 0
+game3_2 db '1 3 2 2 _ _ _ _', 0
+game3_3 db 'o 3 o 2 _ _ _ _', 0
+game3_4 db '1 3 o 2 _ _ _ _', 0
+game3_5 db '1 2 3 2 1 _ _ _', 0
+game3_6 db '1 o 3 o 2 _ _ _', 0
+game3_7 db '1 1 3 o 3 2 3 2', 0
+game3_8 db '_ _ 1 1 2 o o o', 0
+game3_colQnt db 15
+game3_rowQnt db 8
+game3_winQnt db 54
+
+game4_1 db '_ _ 1 o 3 o o o 2 1 _ 1 1 1 _ _', 0
+game4_2 db '1 1 3 2 4 o 4 3 o 3 2 2 o 1 _ _', 0
+game4_3 db '1 o 2 o 2 1 2 2 3 o o 4 2 1 _ _', 0
+game4_4 db '2 2 3 1 1 _ 1 o 3 4 o o 1 _ _ _', 0
+game4_5 db '1 o 1 1 1 1 1 3 o 4 3 4 2 1 _ _', 0
+game4_6 db '1 1 1 1 o 1 _ 2 o 3 o 3 o 1 _ _', 0
+game4_7 db '_ 1 2 3 2 1 _ 1 1 2 2 o 2 1 _ _', 0
+game4_8 db '_ 1 o o 1 _ _ _ _ _ 1 1 1 _ _ _', 0
+game4_9 db '2 3 3 3 2 2 2 2 1 _ _ 1 1 1 1 1', 0
+game4_10 db 'o o 2 2 o 3 o o 1 _ _ 1 o 1 1 o', 0
+game4_11 db '2 2 2 o 4 o 3 2 1 _ _ 1 1 2 2 2', 0
+game4_12 db '_ _ 1 2 o 2 1 _ _ _ _ _ _ 1 o 1', 0
+game4_13 db '_ _ _ 1 1 1 _ _ 1 1 1 _ _ 1 1 1', 0
+game4_14 db '_ _ _ _ _ _ _ _ 1 o 1 _ _ _ 1 1', 0
+game4_15 db '1 1 1 _ _ _ _ _ 1 1 2 1 1 1 3 o', 0
+game4_16 db '1 o 1 _ _ _ _ _ _ _ 1 o 1 1 o o', 0
+game4_colQnt db 31
+game4_rowQnt db 16
+game4_winQnt db 216
+
+game5_1 db '_ _ _ _ _ _ _ _ _', 0
+game5_2 db '_ _ _ _ _ _ _ _ _', 0
+game5_3 db '_ _ _ _ _ _ _ _ _', 0
+game5_4 db '_ _ _ _ _ _ _ _ _', 0
+game5_5 db '_ _ _ _ _ _ _ _ _', 0
+game5_6 db '_ _ _ _ _ _ _ _ _', 0
+game5_7 db '_ _ _ _ _ _ _ _ _', 0
+game5_8 db '_ _ _ _ _ _ _ _ _', 0
+game5_9 db '_ _ _ _ _ _ _ _ _', 0
+game5_colQnt db 0
+game5_rowQnt db 0
+game5_winQnt db 0
 
 colQnt db 0
 rowQnt db 0
 winQnt db 0
+gamesQnt db 4
 
 strLost db 'You Lost!', 13, 10, 0
 strWon db 'Congratulations! You Won', 13, 10, 0
@@ -100,8 +133,6 @@ start:
 	mov ah, 00h
 	mov al, 03h
 	int 10h
-
-	call mineSweeperSetup
 
 	call welcomeScreen
 	call delay
@@ -645,10 +676,7 @@ moveCursor:
 	.done:
 		ret
 
-mineSweeperSetup:
-	call clearTxt
-
-	;random number
+randomNum: ;SÓ FUNCIONA P/ [gamesQnt] = 2
 	;seed
 	xor ax, ax
 	int 1ah
@@ -660,19 +688,28 @@ mineSweeperSetup:
 	add al, dh
 	xor ah, ah
 
-	mov bl, 2 ;quantidade de jogos
-	div bl ;ah = resto da divisão ax/bl
-	add ah, 1 ;ah = (ax mod 2) + 1
-	mov al, ah ;armazena o valor em al
+	;mov bl, 4 ;quantidade de jogos
+	div byte[gamesQnt] ;ah = resto da divisão ax/[gamesQnt]
+	add ah, 1 ;ah = (ax mod [gamesQnt]) + 1
 
-	cmp al, 1
+	ret
+
+mineSweeperSetup:
+	call clearTxt
+
+	call randomNum ;achar uma função que funciona / deixa ro usuário escolher o jogo
+
+	cmp ah, 1
 	je .jogo1
 
-	cmp al, 2
+	cmp ah, 2
 	je .jogo2
 
-	;cmp al, 3
-	;je .jogo3
+	cmp ah, 3
+	je .jogo3
+
+	cmp ah, 4
+	je .jogo4
 
 	.jogo1:
 		mov di, game1_1
@@ -701,6 +738,35 @@ mineSweeperSetup:
 		mov byte[winQnt], bl
 
 		jmp .done
+
+	.jogo3:
+		mov di, game3_1
+
+		mov bl, byte[game3_rowQnt]
+		mov byte[rowQnt], bl
+
+		mov bl, byte[game3_colQnt]
+		mov byte[colQnt], bl
+
+		mov bl, byte[game3_winQnt]
+		mov byte[winQnt], bl
+
+		jmp .done
+
+	.jogo4:
+		mov di, game4_1
+
+		mov bl, byte[game4_rowQnt]
+		mov byte[rowQnt], bl
+
+		mov bl, byte[game4_colQnt]
+		mov byte[colQnt], bl
+
+		mov bl, byte[game4_winQnt]
+		mov byte[winQnt], bl
+
+		jmp .done
+
 
 	.done:
 		mov byte[uncovered], 0
