@@ -47,6 +47,36 @@ game1_colQnt db 17
 game1_rowQnt db 9
 game1_winQnt db 71
 
+game2_1 db '_ _ _ _ _ 1 1 1 _', 0
+game2_2 db '1 1 _ _ 1 2 o 1 _', 0
+game2_3 db 'o 2 2 2 3 o 3 1 _', 0
+game2_4 db '1 2 o o 3 o 2 1 1', 0
+game2_5 db '_ 1 2 2 2 1 2 2 o', 0
+game2_6 db '_ _ _ _ _ _ 2 o 3', 0
+game2_7 db '_ _ _ _ _ _ 3 o 3', 0
+game2_8 db '_ _ _ 1 1 1 2 o 2', 0
+game2_9 db '1 2 1 2 o 1 1 2 2', 0
+game2_10 db 'o 3 o 2 2 2 1 1 o', 0
+game2_11 db 'o 3 1 2 2 o 1 1 1', 0
+game2_12 db '1 1 1 2 o 2 1 _ _', 0
+game2_13 db '_ _ 1 o 2 1 _ _ _', 0
+game2_colQnt db 17
+game2_rowQnt db 13
+game2_winQnt db 99
+
+game3_1 db '_ _ _ _ _ _ _ _ _', 0
+game3_2 db '_ _ _ _ _ _ _ _ _', 0
+game3_3 db '_ _ _ _ _ _ _ _ _', 0
+game3_4 db '_ _ _ _ _ _ _ _ _', 0
+game3_5 db '_ _ _ _ _ _ _ _ _', 0
+game3_6 db '_ _ _ _ _ _ _ _ _', 0
+game3_7 db '_ _ _ _ _ _ _ _ _', 0
+game3_8 db '_ _ _ _ _ _ _ _ _', 0
+game3_9 db '_ _ _ _ _ _ _ _ _', 0
+game3_colQnt db 0
+game3_rowQnt db 0
+game3_winQnt db 0
+
 colQnt db 0
 rowQnt db 0
 winQnt db 0
@@ -71,6 +101,7 @@ start:
 	mov al, 03h
 	int 10h
 
+	call mineSweeperSetup
 
 	call welcomeScreen
 	call delay
@@ -617,12 +648,34 @@ moveCursor:
 mineSweeperSetup:
 	call clearTxt
 
-	;ESCOLHA DO JOGO!! (fazer) !!!!!!!!!!!!!!!
-	;cmp 0, 1, 2, 3.... , jogoescolhido
-	;je jogoX
+	;random number
+	;seed
+	xor ax, ax
+	int 1ah
 
-	;jogoX:
-		mov di, game1_1 ;jogo1 (?)
+	;number
+	mov ax, dx
+	xor ah, ah
+	mul ax
+	add al, dh
+	xor ah, ah
+
+	mov bl, 2 ;quantidade de jogos
+	div bl ;ah = resto da divisão ax/bl
+	add ah, 1 ;ah = (ax mod 2) + 1
+	mov al, ah ;armazena o valor em al
+
+	cmp al, 1
+	je .jogo1
+
+	cmp al, 2
+	je .jogo2
+
+	;cmp al, 3
+	;je .jogo3
+
+	.jogo1:
+		mov di, game1_1
 
 		mov bl, byte[game1_rowQnt]
 		mov byte[rowQnt], bl
@@ -631,6 +684,20 @@ mineSweeperSetup:
 		mov byte[colQnt], bl
 
 		mov bl, byte[game1_winQnt]
+		mov byte[winQnt], bl
+
+		jmp .done
+
+	.jogo2:
+		mov di, game2_1
+
+		mov bl, byte[game2_rowQnt]
+		mov byte[rowQnt], bl
+
+		mov bl, byte[game2_colQnt]
+		mov byte[colQnt], bl
+
+		mov bl, byte[game2_winQnt]
 		mov byte[winQnt], bl
 
 		jmp .done
