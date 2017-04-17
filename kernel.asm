@@ -676,19 +676,14 @@ moveCursor:
 	.done:
 		ret
 
-randomNum: ;SÓ FUNCIONA P/ [gamesQnt] = 2
+randomNum:
 	;seed
-	xor ax, ax
+	mov ah, 02h
 	int 1ah
 
 	;number
-	mov ax, dx
-	xor ah, ah
-	mul ax
-	add al, dh
-	xor ah, ah
-
-	;mov bl, 4 ;quantidade de jogos
+	xor ax, ax
+	mov al, dh
 	div byte[gamesQnt] ;ah = resto da divisão ax/[gamesQnt]
 	add ah, 1 ;ah = (ax mod [gamesQnt]) + 1
 
@@ -697,7 +692,7 @@ randomNum: ;SÓ FUNCIONA P/ [gamesQnt] = 2
 mineSweeperSetup:
 	call clearTxt
 
-	call randomNum ;achar uma função que funciona / deixa ro usuário escolher o jogo
+	call randomNum
 
 	cmp ah, 1
 	je .jogo1
