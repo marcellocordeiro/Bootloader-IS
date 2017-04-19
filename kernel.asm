@@ -1,4 +1,5 @@
 org 0x7e00
+; jmp 0x0000:start
 jmp start
 
 username times 32 db 0
@@ -6,18 +7,23 @@ command times 32 db 0
 commandCopy times 32 db 0
 
 ;strings
-debug db 'fml', 13, 10, 0
+welcome db 'Welcome!', 0
 hello db 'Enter your username: ', 0
 input db '@OS:~$ ', 0
 invalidCommand db 'Invalid command. Type ', 39, 'help', 39, ' for a list of valid commands', 13, 10, 0
 nothingHere db 'nothing here, sorry', 0
 
+;fml
+fml1 db 10, 10, 10, 10, '            hey, it', 39, 's Hannah', 13, 10, 0
+fml2 db '            Hannah Baker', 13, 10, 0
+
 ;commands
 help_cmd db 'help', 0
 clear_cmd db 'clear', 0
 shutdown_cmd db 'shutdown', 0
-minesweeper_cmd db 'minesweeper', 0
-
+minesweeper_cmd db './minesweeper', 0
+fml_cmd db 'fml', 0
+_cmd
 ;bsod
 bsod1 db 10, 10, 10, 10, '            Wh-what happened?', 13, 10, 0
 bsod2 db '            Did I just crash?', 13, 10, 0
@@ -32,8 +38,6 @@ stringColor times 8 db 0
 bgColors db 00h, 04h, 0fh, 0bh, 03h, 0ah, 07h, 09h, 06h, 0ch, 02h, 0eh, 05h, 0dh, 01h
 
 ;minesweeper
-linha0: db '= = = = = = = = =', 13, 10, 0 ; linha vazia para tabuleiro inicial
-
 game1_1 db '_ _ _ _ _ 1 3 o 2', 0
 game1_2 db '_ _ _ _ 1 2 o o 2', 0
 game1_3 db '_ _ _ _ 1 o 3 2 1', 0
@@ -123,12 +127,11 @@ start:
 
 	call welcomeScreen
 	call delay
+
 	;blinking cursor: full block
 	mov ah, 01h
 	mov cx, 07h
 	int 10h
-
-	;call clearTxt
 
 	mov si, hello
 	call printString
@@ -143,6 +146,8 @@ start:
 	mov si, command
 	mov di, username
 	call copy
+
+	call clearTxt
 
 main:
 	;imprime o username
@@ -186,6 +191,12 @@ main:
 	call strcmp
 	jc .minesweeper
 
+	;usuário digitou fml?
+	mov si, fml_cmd
+	mov di, command
+	call strcmp
+	jc .fml
+
 	;usuário não digitou nada?
 	mov si, command
 	cmp byte[si], 0
@@ -226,11 +237,45 @@ main:
 
 		jmp main
 
+	.fml:
+		call FML
+
+		jmp main
+
 	.invalidCommand:
 		mov si, invalidCommand
 		call printString
 
 		jmp main
+
+FML:
+	;video mode
+	mov ah, 00h
+	mov al, 12h
+	int 10h
+
+	call clearVideo
+
+	mov byte[stringColor], 01h
+
+	mov si, fml1
+	call printString_Delay
+
+	mov si, fml2
+	call printString_Delay
+
+	;volta pro terminal
+	mov ah, 0 ;espera ocupada
+	int 16h
+
+	;text mode
+	mov ah, 00h
+	mov al, 03h
+	int 10h
+
+	call clearTxt
+
+	ret
 
 clearTxt:
 	mov bh, 1eh ;00h = modo de vídeo, 07h = modo de texto  ; character attribute = white on black
@@ -312,10 +357,10 @@ readStr:
 	je .clearLine
 
 	cmp ah, 4bh ;left arrow?
-	je readStr ;??
+	je readStr 
 
 	cmp ah, 4dh ;right arrow?
-	je readStr ;??
+	je readStr 
 
 	call printChar
 
@@ -444,8 +489,8 @@ printString_Delay_C:
 		ret
 
 strcmp:
-	mov al, [si] ;salva um byte de si
-	mov bl, [di] ;salva um byte de di
+	mov al, byte[si] ;salva um byte de si
+	mov bl, byte[di] ;salva um byte de di
 
 	cmp al, bl ;os caracteres são iguais?
 	jne .notequal ;nay
@@ -453,8 +498,8 @@ strcmp:
 	cmp al, 0 ;os dois caracteres são 0?
 	je .done ;yay
 
-	inc di ;incrementa di
 	inc si ;incrementa si
+	inc di ;incrementa di
 
 	jmp strcmp
 
@@ -1003,8 +1048,6 @@ welcomeScreen:
 	int 10h
 
 	ret
-
-welcome db 'Welcome!', 0
 
 done:
 	jmp $

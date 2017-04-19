@@ -1,4 +1,5 @@
 org 0x500
+; jmp 0x0000:start
 jmp start
 
 string1: db 'Loading structures for the kernel...', 13, 10, 0
@@ -78,8 +79,7 @@ printString:
 	mov ah, 86h
 	mov cx, 1
 	xor dx, dx
-	;mov dx, 2	
-	;int 15h
+	int 15h
 
 	jmp printString
 
@@ -90,6 +90,6 @@ delay:
 	mov cx, 20
 	xor dx, dx
 	mov dx, 40
-	;int 15h
+	int 15h
 	
 	ret

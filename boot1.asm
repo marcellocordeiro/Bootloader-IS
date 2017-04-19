@@ -1,13 +1,14 @@
 org 0x7c00
+; jmp 0x0000:start
 jmp start
 
 start:
 	xor ax, ax
 	mov ds, ax
 
-	mov ax, 0x50 ;0x50<<1 = 0x500 (início de boot2.asm)
+	;mov ax, 0x50 ;0x50<<4 = 0x500 (início de boot2.asm)
 	mov es, ax
-	xor bx, bx ;posição = es<<1+bx
+	xor bx, bx ;posição = es<<4+bx
 
 	jmp reset
 
@@ -26,6 +27,7 @@ load:
 	mov cl, 2 ;sector 2
 	mov dh, 0 ;head 0
 	mov dl, 0 ;drive 0
+	mov bx, 0x500 ;equivalente a 0x50:0x0000
 	int 13h
 	jc load ;se o acesso falhar, tenta novamente
 
